@@ -9,12 +9,14 @@ import zarr  # type: ignore
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Import GeoTIFF file into VTK dataset')
     parser.add_argument('-i', '--input', type=str, required=True, help='Input filename')
+    
     parser.add_argument('-o', '--output', type=str, help='Output filename for VTK dataset')
     parser.add_argument('--band', type=int, default=0, help='Band to select')
     args = parser.parse_args()
 
     tif = TiffFile(args.input)
-
+    
+   
     if not tif.is_geotiff:
         raise Exception("Not a geotiff file")
 
@@ -26,6 +28,7 @@ if __name__ == '__main__':
     shape = z.shape
     xform = np.array(tif.geotiff_metadata['ModelTransformation'])
     img = vtk.vtkImageData()
+    
     vals = numpy_support.numpy_to_vtk(zz.flatten())
     img.SetDimensions(shape[1], shape[0], 1)
     img.SetSpacing(xform[0,0], -xform[1,1], 1)
@@ -37,6 +40,10 @@ if __name__ == '__main__':
         writer.SetInputData(img)
         writer.SetFileName(args.output)
         writer.Write()
+
+    # import pdb
+    # pdb.set_trace()
+
 
     mapper = vtk.vtkDataSetMapper()
     mapper.SetInputData(img)
