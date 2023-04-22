@@ -13,8 +13,33 @@ import vtk
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 import argparse
 import sys
+import numpy as np
+from vtk.util import numpy_support
+
 
 frame_counter = 0
+
+def convert(arr, r):
+    
+    a = []
+    for temp in arr:
+        # print(temp)
+        # x - long, theta = long x, phi-lat y
+        x = temp[0]+180 # long
+        y = temp[1] # lat
+        # x_new = r * np.sin(x * np.pi/180) * np.cos(y * np.pi/180)
+        # y_new = r * np.sin(x * np.pi/180) * np.sin(y * np.pi/180)
+        # z_new = r * np.cos(x * np.pi/180)
+        x_new = r * np.cos(x * np.pi/180) * np.cos(y * np.pi/180)
+        y_new = r * np.sin(x * np.pi/180) * np.cos(y * np.pi/180)
+        z_new = r * np.sin(y * np.pi/180)
+        temp2 = np.array([x_new, y_new, z_new], dtype=np.float32)
+        a.append(temp2)
+       
+    aa = np.asarray(a)
+    aaa = numpy_support.numpy_to_vtk(aa) 
+
+    return aaa
 
 def make_sphere(resolution_theta, resolution_phi, edge_radius):
     # create and visualize sphere
@@ -53,6 +78,7 @@ class Ui_MainWindow(object):
         # Sliders
         self.slider_year = QSlider()
         self.year_label = QLabel()
+        self.slider_radius = QSlider()
         # self.slider_phi = QSlider()
         # self.slider_radius = QSlider()
         # Push buttons
@@ -89,6 +115,10 @@ class Ui_MainWindow(object):
 
         self.gridlayout.addWidget(QLabel("Data to display : "), 6, 0, 1, 1)
         self.gridlayout.addWidget(self.comboBox, 6, 1, 1, 1)
+
+    
+        self.gridlayout.addWidget(QLabel("Radius Value"), 7, 0, 1, 1)
+        self.gridlayout.addWidget(self.slider_radius, 7, 1, 1, 1)
 
         
         # self.label = self.slider_year
@@ -177,17 +207,34 @@ class PyQtDemo(QMainWindow):
         # interactor.Initialize()
 
         #source
-        [self.sphere, self.edges] = make_sphere(20, 20, 0.001)
-        sphere_mapper = vtk.vtkPolyDataMapper()
-        sphere_mapper.SetInputConnection(self.sphere.GetOutputPort())
-        sphere_actor = vtk.vtkActor()
-        sphere_actor.SetMapper(sphere_mapper)
-        sphere_actor.GetProperty().SetColor(1, 1, 0)
+        # [self.sphere, self.edges] = make_sphere(20, 20, 0.001)
+        # mapToSphere = vtk.vtkTextureMapToSphere()
+        # mapToSphere.SetInputConnection(self.sphere.GetOutputPort())
+        # sphere_mapper = vtk.vtkPolyDataMapper()
+        # sphere_mapper.SetInputConnection(mapToSphere.GetOutputPort())
+    
+        
 
+        rainReader=vtk.vtkXMLImageDataReader()
+        rainReader.SetFileName("data/rain08_21.vti")
+        rainReader.Update()
+        arrele = rainReader.GetOutput().GetPointData().GetArray(0)
+        
+        # self.warp = warp
         #contour
         cfilter = vtk.vtkContourFilter()
-        cfilter.SetInputConnection(warp.GetOutputPort())
-        cfilter.GenerateValues(19, -10000, 8000)
+        cfilter.SetInputConnection(rainReader.GetOutputPort())
+        cfilter.GenerateValues(15, 0, 1500)
+        cfilter.Update()
+        curves = cfilter.GetOutput()
+        arr = curves.GetPoints().GetData()
+        self.arrnp = numpy_support.vtk_to_numpy(arr)
+        radius = 6356000
+        self.radius = radius
+        coor_sphere = convert(arr=self.arrnp, r=self.radius)
+        
+        curves.GetPoints().SetData(coor_sphere)
+
 
         #tubefilter
         tubeFilter = vtk.vtkTubeFilter()
@@ -199,24 +246,38 @@ class PyQtDemo(QMainWindow):
         #color tubes
         ctf =  vtk.vtkColorTransferFunction()
         ctf.SetColorSpaceToRGB()
-        ctf.AddRGBPoint(-11000, 1, 1, 1) # white color for negative elevations
-        ctf.AddRGBPoint(-1000, 1, 1, 1) # same color at -1000 to force all the values in between to be white as well
-        ctf.AddRGBPoint(0, 1, 0, 0) # sea level is red 
-        ctf.AddRGBPoint(1000, 0, 0, 1) # positive elevations are blue 
-        ctf.AddRGBPoint(8000, 0, 0, 1) # same color from 1000 to 8000 m elevations
+        ctf.AddRGBPoint(0, 1, 0, 0)
+        ctf.AddRGBPoint(25,1,1,1)
+        ctf.AddRGBPoint(50,1,1,1)
+        ctf.AddRGBPoint(75,1,1,1)
+        ctf.AddRGBPoint(100, 0.1, 0.1, 1)
+        ctf.AddRGBPoint(200, 0.6, 0.6, 0.6)
+        ctf.AddRGBPoint(300, 0.1, 0.9, 0.3)
+        ctf.AddRGBPoint(500, 1, 0.6, .1)
+        ctf.AddRGBPoint(700, 1, 0.6, 0.8)
+        ctf.AddRGBPoint(900, 1, 0, 0.89)
+        ctf.AddRGBPoint(1200, 0, 1, 0.89)
+        ctf.AddRGBPoint(1500, 1, 1, 0) #same color from 1000 to 8000 m elevations
+        ctf.AddRGBPoint(1700, 1, 0, 0.5)
+        ctf.AddRGBPoint(1800, 1, 1, 0.5)
+        ctf.AddRGBPoint(1900, 1, 0.5, 0)
+        ctf.AddRGBPoint(2000, 1, 0, 0)
 
         cmapper=vtk.vtkPolyDataMapper() 
-        cmapper.SetInputConnection(cfilter.GetOutputPort())
+        cmapper.SetInputData(curves)
         cmapper.SetLookupTable(ctf)
         # cmapper.ScalarVisibilityOff()
         cmapper.Update()
 
 
         cactor=vtk.vtkActor()
-        # cactor.SetMapper(cmapper)
+        cactor.SetMapper(cmapper)
+        cactor.GetProperty().SetOpacity(1)
+
 
         # Create the Renderer
         self.ren = vtk.vtkRenderer()
+        iactor.GetProperty().SetOpacity(1)
         self.ren.AddActor(iactor)
         self.ren.AddActor(cactor)
         self.ren.GradientBackgroundOn()  # Set gradient for background
@@ -233,7 +294,9 @@ class PyQtDemo(QMainWindow):
             slider.setTickPosition(QSlider.TicksAbove)
             slider.setRange(bounds[0], bounds[1])
 
-        slider_setup(self.ui.slider_year, self.scale, [2000, 2023], 5)
+        
+        slider_setup(self.ui.slider_year, self.scale, [2000, 2020], 5)
+        slider_setup(self.ui.slider_radius, self.radius, [2000, 2020], 5)
         # slider_setup(self.ui.slider_phi, self.phi, [3, 200], 10)
         # slider_setup(self.ui.slider_radius, self.radius*100, [1, 10], 2)
 
@@ -242,6 +305,14 @@ class PyQtDemo(QMainWindow):
         self.scale = val
         self.warp.SetScaleFactor(self.scale)
         self.ui.log.insertPlainText('Theta resolution set to {}\n'.format(self.scale))
+        self.ui.vtkWidget.GetRenderWindow().Render()
+
+    def radius_callback(self, val):
+        # print("Year selected :" , val)
+        self.radius = val
+        
+        
+        # self.ui.log.insertPlainText('Theta resolution set to {}\n'.format(self.scale))
         self.ui.vtkWidget.GetRenderWindow().Render()
 
     def combo_callback(self, val):
@@ -313,4 +384,5 @@ if __name__=="__main__":
 
     window.ui.slider_year.valueChanged.connect(window.year_callback)
     window.ui.comboBox.activated.connect(window.combo_callback)
+    window.ui.slider_year.valueChanged.connect(window.radius_callback)
     sys.exit(app.exec_())
