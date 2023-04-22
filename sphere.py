@@ -221,8 +221,11 @@ class PyQtDemo(QMainWindow):
         
 
         rainReader=vtk.vtkXMLImageDataReader()
-        rainReader.SetFileName("data/rainVTI/rain_21.vti")
-        rainReader.Update()
+        rainReader.SetFileName("data/rainVTI/rain_23.vti")
+        self.rainReader = rainReader
+        # rainReader.Update()
+        self.rainFile = "data/rainVTI/rain_"
+       
         arrele = rainReader.GetOutput().GetPointData().GetArray(0)
         
         # self.warp = warp
@@ -347,6 +350,7 @@ class PyQtDemo(QMainWindow):
         else : self.file = "temp/surface_temp_"  
         file_name = "data/"+self.file+str(self.year)+".jpg"
         self.sreader.SetFileName(file_name)
+        self.sreader.Update()
         self.ui.log.insertPlainText("File Updated to {}".format(file_name))
         # self.year = val
         # file_name = "data/surface_temp_"+str(self.year)+".jpg"
@@ -362,6 +366,12 @@ class PyQtDemo(QMainWindow):
         file_name = "data/"+self.file+str(self.year)+".jpg"
         self.sreader.SetFileName(file_name)
         self.ui.log.insertPlainText("File Updated to {}".format(file_name))
+
+        self.ui.vtkWidget.GetRenderWindow().Render()
+        yr = int(self.year)-2000
+        print("File updated : "+"data/rainVTI/rain_"+str(yr)+".vti")
+        self.rainReader.SetFileName("data/rainVTI/rain_"+str(yr)+".vti")
+        
 
         self.ui.vtkWidget.GetRenderWindow().Render()
         # self.scale = val
