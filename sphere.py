@@ -19,6 +19,58 @@ from vtk.util import numpy_support
 
 frame_counter = 0
 
+class colorbar_param:
+    def __init__(self, title='No title', title_col=[1,1,1], title_font_size=22, label_col=[1,1,1], pos=[0.9, 0.5], width=80, height=400, nlabels=4, font_size=18, title_offset=10):
+        self.title=title
+        self.title_col=title_col
+        self.label_col=label_col
+        self.pos=pos
+        self.width=width
+        self.height=height
+        self.nlabels=nlabels
+        self.font_size=font_size
+        self.title_offset=title_offset
+        self.title_font_size=title_font_size
+
+class colorbar:
+    def __init__(self, ctf, param, is_float=True):
+        # Create a color bar
+        self.scalar_bar = vtk.vtkScalarBarActor()
+        # size and relative position
+        self.scalar_bar.SetLookupTable(ctf)
+        self.scalar_bar.SetPosition(param.pos[0], param.pos[1])
+        self.scalar_bar.SetMaximumWidthInPixels(param.width)
+        self.scalar_bar.SetMaximumHeightInPixels(param.height)
+        # title properties
+        self.scalar_bar.SetTitle(param.title)
+        self.scalar_bar.GetTitleTextProperty().SetColor(param.title_col[0], param.title_col[1],  param.title_col[2])
+        self.scalar_bar.SetVerticalTitleSeparation(param.title_offset)
+        self.scalar_bar.GetTitleTextProperty().ShadowOff()
+        self.scalar_bar.GetTitleTextProperty().SetFontSize(param.title_font_size)
+        self.scalar_bar.GetTitleTextProperty().BoldOn()
+        self.scalar_bar.GetLabelTextProperty().SetFontSize(param.font_size)
+        self.scalar_bar.GetLabelTextProperty().BoldOn()
+        self.scalar_bar.UnconstrainedFontSizeOn()
+        # label properties
+        self.scalar_bar.SetNumberOfLabels(param.nlabels)
+        self.scalar_bar.SetTextPad(8)
+        self.scalar_bar.DrawTickLabelsOn()
+        if is_float:
+            format='%0.2f'
+        else:
+            format='%0.0f'
+        self.scalar_bar.SetLabelFormat(format)
+        self.scalar_bar.GetLabelTextProperty().SetColor(param.label_col[0],
+                                                   param.label_col[1],
+                                                   param.label_col[2])
+        self.scalar_bar.GetLabelTextProperty().SetFontSize(param.font_size)
+        self.scalar_bar.GetLabelTextProperty().BoldOff()
+        self.scalar_bar.GetLabelTextProperty().ShadowOff()
+    
+    def get(self):
+        return self.scalar_bar
+
+
 def convert(arr, r):
     
     a = []
@@ -60,6 +112,7 @@ def make_sphere(resolution_theta, resolution_phi, edge_radius):
 
 
 class Ui_MainWindow(object):
+    # global toggle_button
     def setupUi(self, MainWindow):
         MainWindow.setObjectName('The Main Window')
         MainWindow.setWindowTitle('Simple VTK + PyQt5 Example')
@@ -78,6 +131,11 @@ class Ui_MainWindow(object):
         # Sliders
         self.slider_year = QSlider()
         self.year_label = QLabel()
+        self.toggle_button = QPushButton()
+        self.toggle_button.setText('Disable Rainfall')
+        self.toggle_button.setCheckable(True)
+        # toggle_button = self.toggle_button1
+ 
         # self.slider_radius = QSlider()
         # self.slider_phi = QSlider()
         # self.slider_radius = QSlider()
@@ -107,7 +165,7 @@ class Ui_MainWindow(object):
     
         self.gridlayout.addWidget(QLabel("Year Value Selected : "), 5, 0, 1, 1)
         self.gridlayout.addWidget(self.year_label, 5, 1, 1, 1)
-        self.year_label.setText("test")
+        self.year_label.setText("2023")
 
         self.comboBox = QComboBox()
         self.comboBox.addItem("Vegetation")
@@ -115,6 +173,9 @@ class Ui_MainWindow(object):
 
         self.gridlayout.addWidget(QLabel("Data to display : "), 6, 0, 1, 1)
         self.gridlayout.addWidget(self.comboBox, 6, 1, 1, 1)
+
+        self.gridlayout.addWidget(QLabel( "Disable Rainfall "), 7, 0, 1, 1)
+        self.gridlayout.addWidget(self.toggle_button, 7, 1, 1, 1)
 
     
         # self.gridlayout.addWidget(QLabel("Radius Value"), 7, 0, 1, 1)
@@ -288,6 +349,10 @@ class PyQtDemo(QMainWindow):
         ctf.AddRGBPoint(1900, 1, 0.5, 0)
         ctf.AddRGBPoint(2000, 1, 0, 0)
 
+        #color bar
+        colorbarparam = colorbar_param(title = "Rainfall")
+        colorbar_actor = colorbar(ctf,colorbarparam).get()
+
         cmapper=vtk.vtkPolyDataMapper() 
         cmapper.SetInputData(curves)
         self.cmapper = cmapper
@@ -321,7 +386,11 @@ class PyQtDemo(QMainWindow):
 
         iactor.GetProperty().SetOpacity(1)
         self.ren.AddActor(iactor)
-        self.ren.AddActor(cactor)
+        if not self.ui.toggle_button.isChecked():
+            self.ren.AddActor(cactor)
+            self.ren.AddActor(colorbar_actor)
+        self.cactor = cactor
+        self.colorbar_actor = colorbar_actor
         self.ren.GradientBackgroundOn()  # Set gradient for background
         self.ren.SetBackground(0.75, 0.75, 0.75)  # Set background to silver
         self.ui.vtkWidget.GetRenderWindow().AddRenderer(self.ren)
@@ -380,13 +449,16 @@ class PyQtDemo(QMainWindow):
         self.sreader.SetFileName(file_name)
         self.sreader.Update()
         self.ui.log.insertPlainText("File Updated to {}".format(file_name))
+        window.ui.year_label.setText(str(self.year))
 
         # self.ui.vtkWidget.GetRenderWindow().Render()
         # yr = int(self.year)-2000
-        print("File updated : "+"data/rainVTI/rain_"+str(self.year)+".vti")
-        file = "data/rainVTI/rain_"+str(self.year)+".vti"
-        curves = isoContoursGen(fileName=file)
-        self.cmapper.SetInputData(curves)
+        if window.ui.toggle_button.isChecked():
+            print("File updated : "+"data/rainVTI/rain_"+str(self.year)+".vti")
+            file = "data/rainVTI/rain_"+str(self.year)+".vti"
+            curves = isoContoursGen(fileName=file)
+            self.cmapper.SetInputData(curves)
+        
         # self.rainReader.SetFileName("data/rainVTI/rain_"+str(self.year)+".vti")
         # self.rainReader.Update()
         # self.cfilter.SetInputConnection(self.rainReader.GetOutputPort())
@@ -415,6 +487,31 @@ class PyQtDemo(QMainWindow):
 
     def camera_callback(self):
         print_camera_settings(self.ren.GetActiveCamera(), self.ui.camera_info, self.ui.log)
+
+    def toggle_callback(self):
+        print("Toggle Called")
+        if window.ui.toggle_button.isChecked():
+            # setting background color to light-blue
+            # self.button.setStyleSheet("background-color : lightblue")
+
+            window.ui.toggle_button.setText("Enable Rainfall ")
+            file = "data/rainVTI/rain_"+str(self.year)+".vti"
+            curves = isoContoursGen(fileName=file)
+            self.cmapper.SetInputData(curves)
+ 
+        # if it is unchecked
+        else:
+            window.ui.toggle_button.setText("Disable Rainfall ")
+            self.ren.RemoveActor(self.cactor)
+            self.ren.RemoveActor(self.colorbar_actor)
+            self.ui.vtkWidget.GetRenderWindow().Render()
+            # file = "data/rainVTI/rain_"+str(self.year)+".vti"
+            # curves = isoContoursGen(fileName="")
+            # self.cmapper.SetInputData(curves)
+            # set background color back to light-grey
+            # self.button.setStyleSheet("background-color : lightgrey")
+ 
+        # print_camera_settings(self.ren.GetActiveCamera(), self.ui.camera_info, self.ui.log)
 
     
 
@@ -478,4 +575,5 @@ if __name__=="__main__":
     window.ui.slider_year.valueChanged.connect(window.year_callback)
     window.ui.comboBox.activated.connect(window.combo_callback)
     window.ui.slider_year.valueChanged.connect(window.radius_callback)
+    window.ui.toggle_button.clicked.connect(window.toggle_callback)
     sys.exit(app.exec_())
