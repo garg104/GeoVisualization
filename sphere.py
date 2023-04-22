@@ -139,8 +139,43 @@ class Ui_MainWindow(object):
         # self.gridlayout.addWidget(self.push_quit, 5, 5, 1, 1)
         MainWindow.setCentralWidget(self.centralWidget)
 
+
+
+
+def isoContoursGen(fileName):
+    rainReader=vtk.vtkXMLImageDataReader()
+    rainReader.SetFileName(fileName)
+    # data/rainVTI/rain_2021.vti
+
+    rainReader.Update()
+    rainReader = rainReader
+    rainFile = "data/rainVTI/rain_"
+    
+    arrele = rainReader.GetOutput().GetPointData().GetArray(0)
+    
+    # self.warp = warp
+    #contour
+    cfilter = vtk.vtkContourFilter()
+    
+    cfilter.SetInputConnection(rainReader.GetOutputPort())
+    cfilter.GenerateValues(30, 0, 1500)
+    cfilter.Update()
+    cfilter = cfilter
+    curves = cfilter.GetOutput()
+    arr = curves.GetPoints().GetData()
+    arrnp = numpy_support.vtk_to_numpy(arr)
+    radius = 6368000
+    # self.radius = radius
+    coor_sphere = convert(arr=arrnp, r=radius)
+    
+    curves.GetPoints().SetData(coor_sphere)
+
+    return curves
+
+
 class PyQtDemo(QMainWindow):
     global renderer
+
     def __init__(self, parent = None):
         QMainWindow.__init__(self, parent)
         global renderer
@@ -218,41 +253,15 @@ class PyQtDemo(QMainWindow):
         # sphere_mapper = vtk.vtkPolyDataMapper()
         # sphere_mapper.SetInputConnection(mapToSphere.GetOutputPort())
     
-        
-
-        rainReader=vtk.vtkXMLImageDataReader()
-        rainReader.SetFileName("data/rainVTI/rain_2021.vti")
-        
-        rainReader.Update()
-        self.rainReader = rainReader
-        self.rainFile = "data/rainVTI/rain_"
-       
-        arrele = rainReader.GetOutput().GetPointData().GetArray(0)
-        
-        # self.warp = warp
-        #contour
-        cfilter = vtk.vtkContourFilter()
-        
-        cfilter.SetInputConnection(rainReader.GetOutputPort())
-        cfilter.GenerateValues(30, 0, 1500)
-        cfilter.Update()
-        self.cfilter = cfilter
-        curves = cfilter.GetOutput()
-        arr = curves.GetPoints().GetData()
-        self.arrnp = numpy_support.vtk_to_numpy(arr)
-        radius = 6368000
-        self.radius = radius
-        coor_sphere = convert(arr=self.arrnp, r=self.radius)
-        
-        curves.GetPoints().SetData(coor_sphere)
+        curves = isoContoursGen(fileName="data/rainVTI/rain_2021.vti")
 
 
         #tubefilter
-        tubeFilter = vtk.vtkTubeFilter()
-        tubeFilter.SetInputConnection(cfilter.GetOutputPort())
-        tubeFilter.SetRadius(5000)
-        # tubeFilter.SetNumberOfSides(5)
-        tubeFilter.Update()
+        # tubeFilter = vtk.vtkTubeFilter()
+        # tubeFilter.SetInputConnection(cfilter.GetOutputPort())
+        # tubeFilter.SetRadius(5000)
+        # # tubeFilter.SetNumberOfSides(5)
+        # tubeFilter.Update()
 
         #color tubes
         ctf =  vtk.vtkColorTransferFunction()
@@ -281,6 +290,7 @@ class PyQtDemo(QMainWindow):
 
         cmapper=vtk.vtkPolyDataMapper() 
         cmapper.SetInputData(curves)
+        self.cmapper = cmapper
         cmapper.SetLookupTable(ctf)
         # cmapper.ScalarVisibilityOff()
         cmapper.Update()
@@ -374,9 +384,13 @@ class PyQtDemo(QMainWindow):
         # self.ui.vtkWidget.GetRenderWindow().Render()
         # yr = int(self.year)-2000
         print("File updated : "+"data/rainVTI/rain_"+str(self.year)+".vti")
-        self.rainReader.SetFileName("data/rainVTI/rain_"+str(self.year)+".vti")
-        self.rainReader.Update()
-        self.cfilter.SetInputConnection(self.rainReader.GetOutputPort())
+        file = "data/rainVTI/rain_"+str(self.year)+".vti"
+        curves = isoContoursGen(fileName=file)
+        self.cmapper.SetInputData(curves)
+        # self.rainReader.SetFileName("data/rainVTI/rain_"+str(self.year)+".vti")
+        # self.rainReader.Update()
+        # self.cfilter.SetInputConnection(self.rainReader.GetOutputPort())
+
         
 
         self.ui.vtkWidget.GetRenderWindow().Render()
