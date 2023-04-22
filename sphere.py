@@ -78,7 +78,7 @@ class Ui_MainWindow(object):
         # Sliders
         self.slider_year = QSlider()
         self.year_label = QLabel()
-        self.slider_radius = QSlider()
+        # self.slider_radius = QSlider()
         # self.slider_phi = QSlider()
         # self.slider_radius = QSlider()
         # Push buttons
@@ -117,8 +117,8 @@ class Ui_MainWindow(object):
         self.gridlayout.addWidget(self.comboBox, 6, 1, 1, 1)
 
     
-        self.gridlayout.addWidget(QLabel("Radius Value"), 7, 0, 1, 1)
-        self.gridlayout.addWidget(self.slider_radius, 7, 1, 1, 1)
+        # self.gridlayout.addWidget(QLabel("Radius Value"), 7, 0, 1, 1)
+        # self.gridlayout.addWidget(self.slider_radius, 7, 1, 1, 1)
 
         
         # self.label = self.slider_year
@@ -140,9 +140,11 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralWidget)
 
 class PyQtDemo(QMainWindow):
-
+    global renderer
     def __init__(self, parent = None):
         QMainWindow.__init__(self, parent)
+        global renderer
+        global window
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
@@ -195,6 +197,9 @@ class PyQtDemo(QMainWindow):
         iactor.SetMapper(imapper)
         iactor.SetTexture(texture)
 
+
+
+
         # renderer=vtk.vtkRenderer()
         # renderer.AddActor(iactor)
 
@@ -224,12 +229,12 @@ class PyQtDemo(QMainWindow):
         #contour
         cfilter = vtk.vtkContourFilter()
         cfilter.SetInputConnection(rainReader.GetOutputPort())
-        cfilter.GenerateValues(15, 0, 1500)
+        cfilter.GenerateValues(30, 0, 1500)
         cfilter.Update()
         curves = cfilter.GetOutput()
         arr = curves.GetPoints().GetData()
         self.arrnp = numpy_support.vtk_to_numpy(arr)
-        radius = 6356000
+        radius = 6358002
         self.radius = radius
         coor_sphere = convert(arr=self.arrnp, r=self.radius)
         
@@ -247,10 +252,15 @@ class PyQtDemo(QMainWindow):
         ctf =  vtk.vtkColorTransferFunction()
         ctf.SetColorSpaceToRGB()
         ctf.AddRGBPoint(0, 1, 0, 0)
-        ctf.AddRGBPoint(25,1,1,1)
-        ctf.AddRGBPoint(50,1,1,1)
-        ctf.AddRGBPoint(75,1,1,1)
+        ctf.AddRGBPoint(10, 1, 1, 1)
+        ctf.AddRGBPoint(25,1,0,0)
+        ctf.AddRGBPoint(50,1,0,0)
+        ctf.AddRGBPoint(75,1,0,0)
         ctf.AddRGBPoint(100, 0.1, 0.1, 1)
+        ctf.AddRGBPoint(110, 1, 1, 1)
+        ctf.AddRGBPoint(125,1,0,0)
+        ctf.AddRGBPoint(150,1,0,0)
+        ctf.AddRGBPoint(175,1,0,0)
         ctf.AddRGBPoint(200, 0.6, 0.6, 0.6)
         ctf.AddRGBPoint(300, 0.1, 0.9, 0.3)
         ctf.AddRGBPoint(500, 1, 0.6, .1)
@@ -277,6 +287,22 @@ class PyQtDemo(QMainWindow):
 
         # Create the Renderer
         self.ren = vtk.vtkRenderer()
+        renderer = self.ren
+
+        #         Camera settings:
+        #   * position:        (-6016408.402472742, -21485231.33252782, 8849218.06925976)
+        #   * focal point:     (4050.0, 6022.75, -15222.5)
+        #   * up vector:       (-0.28714312753228705, 0.43288884593951726, 0.8544917035127549)
+        #   * clipping range:  (4602250.824907519, 48508541.6215622)
+
+        #camera
+        camera = self.ren.GetActiveCamera()
+        camera.SetPosition(-6016408.402472742, -21485231.33252782, 8849218.06925976)
+        camera.SetFocalPoint(4050.0, 6022.75, -15222.5)
+        camera.SetViewUp(-0.28714312753228705, 0.43288884593951726, 0.8544917035127549)
+        camera.SetClippingRange(4602250.824907519, 48508541.6215622)
+        
+
         iactor.GetProperty().SetOpacity(1)
         self.ren.AddActor(iactor)
         self.ren.AddActor(cactor)
@@ -295,8 +321,8 @@ class PyQtDemo(QMainWindow):
             slider.setRange(bounds[0], bounds[1])
 
         
-        slider_setup(self.ui.slider_year, self.scale, [2000, 2020], 5)
-        slider_setup(self.ui.slider_radius, self.radius, [2000, 2020], 5)
+        slider_setup(self.ui.slider_year, self.scale, [2000, 2020], 1000)
+        # slider_setup(self.ui.slider_radius, self.radius, [2000, 2020], 5)
         # slider_setup(self.ui.slider_phi, self.phi, [3, 200], 10)
         # slider_setup(self.ui.slider_radius, self.radius*100, [1, 10], 2)
 
@@ -357,14 +383,48 @@ class PyQtDemo(QMainWindow):
     # def screenshot_callback(self):
     #     save_frame(self.ui.vtkWidget.GetRenderWindow(), self.ui.log)
 
-    # def camera_callback(self):
-    #     print_camera_settings(self.ren.GetActiveCamera(), self.ui.camera_info, self.ui.log)
+    def camera_callback(self):
+        print_camera_settings(self.ren.GetActiveCamera(), self.ui.camera_info, self.ui.log)
+
+    
 
     # def quit_callback(self):
     #     sys.exit()
+def print_camera_settings():
+    global renderer
+    # ---------------------------------------------------------------
+    # Print out the current settings of the camera
+    # ---------------------------------------------------------------
+    camera = renderer.GetActiveCamera()
+    print("Camera settings:")
+    print("  * position:        %s" % (camera.GetPosition(),))
+    print("  * focal point:     %s" % (camera.GetFocalPoint(),))
+    print("  * up vector:       %s" % (camera.GetViewUp(),))
+    print("  * clipping range:  %s" % (camera.GetClippingRange(),))
+
+def key_pressed_callback(obj, event):
+    global args
+    # ---------------------------------------------------------------
+    # Attach actions to specific keys
+    # ---------------------------------------------------------------
+    key = obj.GetKeySym()
+    if key == "s":
+        save_frame()
+    elif key == "c":
+        print_camera_settings()
+    
+def save_frame():
+    print("Save Image")
+    global frame_counter
+    global window
+    global args
+    # ---------------------------------------------------------------
+    # Save current contents of render window to PNG file
+    # --------------------------------------------------------------
 
 if __name__=="__main__":
     global args
+    # global renderer
 
     parser= argparse.ArgumentParser(description='Assignment 1 Task 1')
     # parser.add_argument('-g','--geometry',type=str,help='Filename for heightfield')
@@ -381,6 +441,9 @@ if __name__=="__main__":
     window.setWindowState(Qt.WindowMaximized)  # Maximize the window
     window.iren.Initialize() # Need this line to actually show
                              # the render inside Qt
+
+     #camera settings 
+    window.iren.AddObserver("KeyPressEvent", key_pressed_callback)
 
     window.ui.slider_year.valueChanged.connect(window.year_callback)
     window.ui.comboBox.activated.connect(window.combo_callback)
