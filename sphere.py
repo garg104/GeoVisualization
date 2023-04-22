@@ -250,22 +250,16 @@ class PyQtDemo(QMainWindow):
         
 
         # Source
-        ireader=vtk.vtkXMLPolyDataReader()
-        # ireader.SetFileName(args.geometry)
-        # ireader.SetFileName("elevation_large.vti")
-        
+        ireader=vtk.vtkXMLPolyDataReader()        
         ireader.SetFileName("data/elevation/elevation_sphere_large.vtp")
         ireader.Update()
 
 
 
         output=ireader.GetOutput()
-        print(f'our output is \n{output}')
         scalars=output.GetPointData().GetScalars()
-        print('scalars is \n{scalars}')
 
         sreader=vtk.vtkJPEGReader()
-        # sreader.SetFileName(args.image)
         file_name = "data/vegetation/vegetation_"+str(self.year)+".jpg"
         sreader.SetFileName(file_name)
         self.file = "vegetation/vegetation_"
@@ -292,62 +286,73 @@ class PyQtDemo(QMainWindow):
         iactor=vtk.vtkActor()
         iactor.SetMapper(imapper)
         iactor.SetTexture(texture)
-
-
-
-
-        # renderer=vtk.vtkRenderer()
-        # renderer.AddActor(iactor)
-
-        # window=vtk.vtkRenderWindow()
-        # window.AddRenderer(renderer)
-        # window.SetSize(1024,1024)
-
-        # interactor=vtk.vtkRenderWindowInteractor()
-        # interactor.SetRenderWindow(window)
-        # interactor.Initialize()
-
-        #source
-        # [self.sphere, self.edges] = make_sphere(20, 20, 0.001)
-        # mapToSphere = vtk.vtkTextureMapToSphere()
-        # mapToSphere.SetInputConnection(self.sphere.GetOutputPort())
-        # sphere_mapper = vtk.vtkPolyDataMapper()
-        # sphere_mapper.SetInputConnection(mapToSphere.GetOutputPort())
     
         curves = isoContoursGen(fileName="data/rainVTI/rain_2021.vti")
 
-
-        #tubefilter
-        # tubeFilter = vtk.vtkTubeFilter()
-        # tubeFilter.SetInputConnection(cfilter.GetOutputPort())
-        # tubeFilter.SetRadius(5000)
-        # # tubeFilter.SetNumberOfSides(5)
-        # tubeFilter.Update()
+        
+        rgb255 = [
+            [13, 8, 135],
+            [38, 5, 145],
+            [58, 4, 154],
+            [76, 2, 161],
+            [92, 1, 166],
+            [110, 0, 168],
+            [126, 3, 168],
+            [141, 11, 165],
+            [156, 23, 158],
+            [170, 35, 149],
+            [181, 47, 140],
+            [193, 59, 131],
+            [204, 71, 120],
+            [213, 83, 111],
+            [222, 95, 101],
+            [230, 108, 92],
+            [237, 121, 83],
+            [243, 135, 74],
+            [248, 149, 64],
+            [252, 163, 56],
+            [253, 180, 47],
+            [253, 197, 39],
+            [251, 213, 36],
+            [246, 232, 38],
+            [240, 249, 33],
+        ]
+        
+        rgb = []
+        for i in range(len(rgb255)):
+            rgb.append([rgb255[i][0] / 255, rgb255[i][1] / 255, rgb255[i][2] / 255])
+            
+        # import pdb
+        # pdb.set_trace()
 
         #color tubes
         ctf =  vtk.vtkColorTransferFunction()
         ctf.SetColorSpaceToRGB()
-        ctf.AddRGBPoint(0, 1, 0, 0)
-        ctf.AddRGBPoint(10, 1, 1, 1)
-        ctf.AddRGBPoint(25,1,1,1)
-        ctf.AddRGBPoint(50,1,1,1)
-        ctf.AddRGBPoint(75,1,1,1)
-        ctf.AddRGBPoint(100, 0.1, 0.1, 1)
-        ctf.AddRGBPoint(110, 1, 1, 1)
-        ctf.AddRGBPoint(125,1,1,1)
-        ctf.AddRGBPoint(150,1,1,1)
-        ctf.AddRGBPoint(175,1,1,1)
-        ctf.AddRGBPoint(200, 0.6, 0.6, 0.6)
-        ctf.AddRGBPoint(300, 0.1, 0.9, 0.3)
-        ctf.AddRGBPoint(500, 1, 0.6, .1)
-        ctf.AddRGBPoint(700, 1, 0.6, 0.8)
-        ctf.AddRGBPoint(900, 1, 0, 0.89)
-        ctf.AddRGBPoint(1200, 0, 1, 0.89)
-        ctf.AddRGBPoint(1500, 1, 1, 0) #same color from 1000 to 8000 m elevations
-        ctf.AddRGBPoint(1700, 1, 0, 0.5)
-        ctf.AddRGBPoint(1800, 1, 1, 0.5)
-        ctf.AddRGBPoint(1900, 1, 0.5, 0)
-        ctf.AddRGBPoint(2000, 1, 0, 0)
+        ctf.AddRGBPoint(0, rgb[0][0], rgb[0][1], rgb[0][2])
+        ctf.AddRGBPoint(10, rgb[1][0], rgb[1][1], rgb[1][2])
+        ctf.AddRGBPoint(25, rgb[2][0], rgb[2][1], rgb[2][2])
+        ctf.AddRGBPoint(75, rgb[3][0], rgb[3][1], rgb[3][2])
+        ctf.AddRGBPoint(100, rgb[4][0], rgb[4][1], rgb[4][2])
+        ctf.AddRGBPoint(110,rgb[5][0], rgb[5][1], rgb[5][2])  
+        ctf.AddRGBPoint(125,rgb[6][0], rgb[6][1], rgb[6][2]) 
+        ctf.AddRGBPoint(150,rgb[7][0], rgb[7][1], rgb[7][2]) 
+        ctf.AddRGBPoint(170,rgb[8][0], rgb[8][1], rgb[8][2]) 
+        ctf.AddRGBPoint(200,rgb[9][0], rgb[9][1], rgb[9][2]) 
+        ctf.AddRGBPoint(250,rgb[10][0], rgb[10][1], rgb[10][2])   
+        ctf.AddRGBPoint(300,rgb[11][0], rgb[11][1], rgb[11][2])   
+        ctf.AddRGBPoint(400,rgb[12][0], rgb[12][1], rgb[12][2])  
+        ctf.AddRGBPoint(500,rgb[13][0], rgb[13][1], rgb[13][2])   
+        ctf.AddRGBPoint(600,rgb[14][0], rgb[14][1], rgb[14][2])  
+        ctf.AddRGBPoint(700,rgb[15][0], rgb[15][1], rgb[15][2]) 
+        ctf.AddRGBPoint(750,rgb[16][0], rgb[16][1], rgb[16][2]) 
+        ctf.AddRGBPoint(800,rgb[17][0], rgb[17][1], rgb[17][2]) 
+        ctf.AddRGBPoint(900,rgb[18][0], rgb[18][1], rgb[18][2]) 
+        ctf.AddRGBPoint(1000,rgb[19][0], rgb[19][1], rgb[19][2]) 
+        ctf.AddRGBPoint(1100,rgb[20][0], rgb[20][1], rgb[20][2])
+        ctf.AddRGBPoint(1200,rgb[21][0], rgb[21][1], rgb[21][2])
+        ctf.AddRGBPoint(1300,rgb[22][0], rgb[22][1], rgb[22][2])
+        ctf.AddRGBPoint(1400,rgb[23][0], rgb[23][1], rgb[23][2])
+        ctf.AddRGBPoint(1500,rgb[24][0], rgb[24][1], rgb[24][2])
 
         #color bar
         colorbarparam = colorbar_param(title = "Rainfall")
@@ -360,7 +365,6 @@ class PyQtDemo(QMainWindow):
         # cmapper.ScalarVisibilityOff()
         cmapper.Update()
 
-
         cactor=vtk.vtkActor()
         cactor.SetMapper(cmapper)
         cactor.GetProperty().SetOpacity(1)
@@ -369,12 +373,6 @@ class PyQtDemo(QMainWindow):
         # Create the Renderer
         self.ren = vtk.vtkRenderer()
         renderer = self.ren
-
-        #         Camera settings:
-        #   * position:        (-6016408.402472742, -21485231.33252782, 8849218.06925976)
-        #   * focal point:     (4050.0, 6022.75, -15222.5)
-        #   * up vector:       (-0.28714312753228705, 0.43288884593951726, 0.8544917035127549)
-        #   * clipping range:  (4602250.824907519, 48508541.6215622)
 
         #camera
         camera = self.ren.GetActiveCamera()
