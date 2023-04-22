@@ -2,5 +2,5 @@
 
 
 # ignore elevation files
-data/elevation*
+data/elevation/*
 data/world*
