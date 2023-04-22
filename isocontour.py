@@ -4,7 +4,9 @@
 # Spring 2023
 
 # PyQt6 version of pyqt5_demo.py
+import numpy as np
 
+from vtk.util import numpy_support
 from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QSlider, QGridLayout, QLabel, QPushButton, QTextEdit
 import PyQt6.QtCore as QtCore
 from PyQt6.QtCore import Qt
@@ -15,6 +17,48 @@ import sys
 
 frame_counter = 0
 
+def convert(arr, r):
+    
+    a = []
+    for temp in arr:
+        # print(temp)
+        x = temp[0] + 180 # long
+        y = temp[1] + 90 # lat
+        
+        x_new = r * np.cos(x * np.pi/180) * np.cos(y * np.pi/180)
+        y_new = r * np.sin(x * np.pi/180) * np.sin(y * np.pi/180)
+        
+        
+        x_new = r * np.sin(x * np.pi/180) * np.cos(y * np.pi/180)
+        y_new = r * np.sin(x * np.pi/180) * np.sin(y * np.pi/180)
+        z_new = r * np.cos(x * np.pi/180)
+        temp2 = np.array([x_new, y_new, z_new], dtype=np.float32)
+        a.append(temp2)
+       
+    aa = np.asarray(a)
+    aaa = numpy_support.numpy_to_vtk(aa) 
+
+    return aaa
+
+
+
+def make_sphere(radius, resolution_theta, resolution_phi, edge_radius):
+    # create and visualize sphere
+    sphere_source = vtk.vtkSphereSource()
+    sphere_source.SetRadius(radius)
+    sphere_source.SetCenter(0.0, 0.0, 0.0)
+    sphere_source.SetThetaResolution(resolution_theta)
+    sphere_source.SetPhiResolution(resolution_phi)
+
+    # extract and visualize the edges
+    edge_extractor = vtk.vtkExtractEdges()
+    edge_extractor.SetInputConnection(sphere_source.GetOutputPort())
+    edge_tubes = vtk.vtkTubeFilter()
+    edge_tubes.SetRadius(edge_radius)
+    edge_tubes.SetInputConnection(edge_extractor.GetOutputPort())
+    return [sphere_source, edge_tubes]
+
+
 
 def make_map(elevation, image):
     # elevation is the file that has elevation data points
@@ -22,79 +66,120 @@ def make_map(elevation, image):
     
 
     # read the elevation data
-    elevationReader=vtk.vtkXMLImageDataReader()
-    elevationReader.SetFileName(args.g)
-    elevationReader.Update()
-    print(elevationReader.GetOutput())
-        
+    rainReader=vtk.vtkXMLImageDataReader()
+    rainReader.SetFileName(args.g)
+    rainReader.Update()
+    # print(rainReader.GetOutput().GetScalarRange())
+    # print(rainReader.GetOutput().GetPointData().GetScalars())
+    
+
+    arrele = rainReader.GetOutput().GetPointData().GetArray(0)
+    
+    values = numpy_support.vtk_to_numpy(arrele)
+    sorted = np.sort(np.unique(values))
+    print(sorted)
+    
+    
+    import pdb
+    pdb.set_trace()
+    
+    # rng = arrele.GetNumberOfTuples()
+    # f = open("tiffData.txt","w")
+    # for ind in range(rng):
+    #     f.write(str(arrele.GetTuple(ind)) + "\n")
+    # f.close()
+    # exit()
+    # exit()
     # map the elevation
     elevationMapper = vtk.vtkDataSetMapper()
-    elevationMapper.SetInputData(elevationReader.GetOutput())
-    elevationMapper.SetScalarRange(0, 255)
-    elevationMapper.ScalarVisibilityOff()
-    
-    
-    # read the image data to set the texture of the map
-    textureReader=vtk.vtkJPEGReader()
-    textureReader.SetFileName(args.i)
-    # textureReader.Update()
-
-    # connect the texture data to vtkTexture
-    texture=vtk.vtkTexture()
-    texture.SetInputConnection(textureReader.GetOutputPort())
+    elevationMapper.SetInputData(rainReader.GetOutput())
+    # elevationMapper.SetScalarRange(0, 255)
+    # elevationMapper.ScalarVisibilityOff()
   
     # link the elevationMapper with elevationActor and set the texture
     elevationActor=vtk.vtkActor()
-    elevationActor.SetMapper(elevationMapper)
-    elevationActor.SetTexture(texture)
+    # elevationActor.SetMapper(elevationMapper)
+    # elevationActor.SetTexture(texture)
     
     
     # compute the iso-contours
     isoContour = vtk.vtkContourFilter()
-    isoContour.GenerateValues(19, -10000, 8000)
-    isoContour.SetInputConnection(elevationReader.GetOutputPort())
+    isoContour.GenerateValues(10, 0, 1500)
+    isoContour.SetInputConnection(rainReader.GetOutputPort())
+    isoContour.Update()
+    curves = isoContour.GetOutput()
+    arr = curves.GetPoints().GetData()
+    
+    import pdb
+    pdb.set_trace()
+    arrnp = numpy_support.vtk_to_numpy(arr)
+    
+    
+    radius = 1.0
+    coor_sphere = convert(arr=arrnp, r=radius)
+    
+    curves.GetPoints().SetData(coor_sphere)
+    
+    
+    [sphere, edges] = make_sphere(radius, 20, 20, 0.001)
+    
+    
+     # read the image data to set the texture of the map
+    textureReader=vtk.vtkJPEGReader()
+    textureReader.SetFileName(args.i)
+    textureReader.Update()
+
+    # connect the texture data to vtkTexture
+    texture=vtk.vtkTexture()
+    texture.SetInputConnection(textureReader.GetOutputPort())
+    texture.Update()
+    
+    map_to_sphere = vtk.vtkTextureMapToSphere()
+    map_to_sphere.SetInputConnection(sphere.GetOutputPort())
+    
+    
+    sphere_mapper = vtk.vtkPolyDataMapper()
+    sphere_mapper.SetInputConnection(map_to_sphere.GetOutputPort())
+    
+    
+    sphere_actor = vtk.vtkActor()
+    sphere_actor.SetMapper(sphere_mapper)
+    sphere_actor.SetTexture(texture)
+    
+    
+    
+    # import pdb
+    # pdb.set_trace()
     
     # wrap the iso-contours in tubes
     tubes = vtk.vtkTubeFilter()
     tubes.SetInputConnection(isoContour.GetOutputPort())
-    tubes.SetRadius(40000)
-    
+    tubes.SetRadius(4000)
     
     # color the tubes
     colorTable = vtk.vtkColorTransferFunction()
     colorTable.SetColorSpaceToRGB()
-    colorTable.AddRGBPoint(-10000, 0, 0.9, 0.6)
-    colorTable.AddRGBPoint(-9000, 0, 1, 0)
-    colorTable.AddRGBPoint(-8000, 0, 1, 1)
-    colorTable.AddRGBPoint(-7000, 0.4, 0, 0.1)
-    colorTable.AddRGBPoint(-6000, 0.4, 0, 0.6)
-    colorTable.AddRGBPoint(-5000, 0.5, 0.1, 0.9)
-    colorTable.AddRGBPoint(-4000, 0, 0.9, 0.9)
-    colorTable.AddRGBPoint(-3000, 0.7, 0, 1)
-    colorTable.AddRGBPoint(-2000, 0, 1, 0)
-    colorTable.AddRGBPoint(-1000, 0.91, 0.96, 1)
-    
     colorTable.AddRGBPoint(0, 1, 0, 0)
-    
-    colorTable.AddRGBPoint(1000, 0.1, 0.1, 1)
-    colorTable.AddRGBPoint(2000, 0.1, 0.9, 0.3)
-    colorTable.AddRGBPoint(3000, 0.6, 0.6, 0.6)
-    colorTable.AddRGBPoint(4000, 1, 0.6, .1)
-    colorTable.AddRGBPoint(5000, 1, 0.6, 0.8)
-    colorTable.AddRGBPoint(6000, 1, 0, 0.89)
-    colorTable.AddRGBPoint(7000, 0, 1, 0.89)
-    colorTable.AddRGBPoint(8000, 1, 1, 0)
+    colorTable.AddRGBPoint(100, 0.1, 0.1, 1)
+    colorTable.AddRGBPoint(200, 0.6, 0.6, 0.6)
+    colorTable.AddRGBPoint(300, 0.1, 0.9, 0.3)
+    colorTable.AddRGBPoint(500, 1, 0.6, .1)
+    colorTable.AddRGBPoint(700, 1, 0.6, 0.8)
+    colorTable.AddRGBPoint(900, 1, 0, 0.89)
+    colorTable.AddRGBPoint(1200, 0, 1, 0.89)
+    colorTable.AddRGBPoint(1500, 1, 1, 0)
     
     
     colorMapper = vtk.vtkDataSetMapper()
-    colorMapper.SetInputConnection(tubes.GetOutputPort())
+    colorMapper.SetInputData(curves)
     colorMapper.SetLookupTable(colorTable)
     
     tubesActor = vtk.vtkActor()
     tubesActor.SetMapper(colorMapper)
+    tubesActor.SetTexture(texture)
     
     
-    return [tubes, elevationActor, tubesActor]
+    return [tubes, elevationActor, tubesActor, sphere_actor]
 
 
 class Ui_MainWindow(object):
@@ -140,12 +225,13 @@ class PyQtDemo(QMainWindow):
         # print("Image: " + image)
 
         # Source
-        [self.tubes, self.elevationActor, self.tubesActor] = make_map(elevation, image)
+        [self.tubes, self.elevationActor, self.tubesActor, self.sphere] = make_map(elevation, image)
     
         # Create the Renderer
         self.ren = vtk.vtkRenderer()
-        self.ren.AddActor(self.elevationActor)
+        # self.ren.AddActor(self.elevationActor)
         self.ren.AddActor(self.tubesActor)
+        self.ren.AddActor(self.sphere)
         
         # Set gradient for background
         self.ren.GradientBackgroundOn()
