@@ -221,7 +221,7 @@ class PyQtDemo(QMainWindow):
         
 
         rainReader=vtk.vtkXMLImageDataReader()
-        rainReader.SetFileName("data/rain08_21.vti")
+        rainReader.SetFileName("data/rainVTI/rain_21.vti")
         rainReader.Update()
         arrele = rainReader.GetOutput().GetPointData().GetArray(0)
         
@@ -234,7 +234,7 @@ class PyQtDemo(QMainWindow):
         curves = cfilter.GetOutput()
         arr = curves.GetPoints().GetData()
         self.arrnp = numpy_support.vtk_to_numpy(arr)
-        radius = 6358000
+        radius = 6368000
         self.radius = radius
         coor_sphere = convert(arr=self.arrnp, r=self.radius)
         
