@@ -22,8 +22,13 @@ def convert(arr, r):
     a = []
     for temp in arr:
         # print(temp)
-        x = temp[0] + 180
-        y = temp[1] + 90
+        x = temp[0] + 180 # long
+        y = temp[1] + 90 # lat
+        
+        x_new = r * np.cos(x * np.pi/180) * np.cos(y * np.pi/180)
+        y_new = r * np.sin(x * np.pi/180) * np.sin(y * np.pi/180)
+        
+        
         x_new = r * np.sin(x * np.pi/180) * np.cos(y * np.pi/180)
         y_new = r * np.sin(x * np.pi/180) * np.sin(y * np.pi/180)
         z_new = r * np.cos(x * np.pi/180)
@@ -70,9 +75,13 @@ def make_map(elevation, image):
 
     arrele = rainReader.GetOutput().GetPointData().GetArray(0)
     
-    # values = numpy_support.vtk_to_numpy(arrele)
-    # sorted = np.sort(np.unique(values))
-    # print(sorted)
+    values = numpy_support.vtk_to_numpy(arrele)
+    sorted = np.sort(np.unique(values))
+    print(sorted)
+    
+    
+    import pdb
+    pdb.set_trace()
     
     # rng = arrele.GetNumberOfTuples()
     # f = open("tiffData.txt","w")
@@ -84,18 +93,8 @@ def make_map(elevation, image):
     # map the elevation
     elevationMapper = vtk.vtkDataSetMapper()
     elevationMapper.SetInputData(rainReader.GetOutput())
-    elevationMapper.SetScalarRange(0, 255)
-    elevationMapper.ScalarVisibilityOff()
-    
-    
-    # read the image data to set the texture of the map
-    textureReader=vtk.vtkJPEGReader()
-    textureReader.SetFileName(args.i)
-    textureReader.Update()
-
-    # connect the texture data to vtkTexture
-    texture=vtk.vtkTexture()
-    texture.SetInputConnection(textureReader.GetOutputPort())
+    # elevationMapper.SetScalarRange(0, 255)
+    # elevationMapper.ScalarVisibilityOff()
   
     # link the elevationMapper with elevationActor and set the texture
     elevationActor=vtk.vtkActor()
@@ -110,6 +109,9 @@ def make_map(elevation, image):
     isoContour.Update()
     curves = isoContour.GetOutput()
     arr = curves.GetPoints().GetData()
+    
+    import pdb
+    pdb.set_trace()
     arrnp = numpy_support.vtk_to_numpy(arr)
     
     
@@ -120,15 +122,29 @@ def make_map(elevation, image):
     
     
     [sphere, edges] = make_sphere(radius, 20, 20, 0.001)
+    
+    
+     # read the image data to set the texture of the map
+    textureReader=vtk.vtkJPEGReader()
+    textureReader.SetFileName(args.i)
+    textureReader.Update()
+
+    # connect the texture data to vtkTexture
+    texture=vtk.vtkTexture()
+    texture.SetInputConnection(textureReader.GetOutputPort())
+    texture.Update()
+    
+    map_to_sphere = vtk.vtkTextureMapToSphere()
+    map_to_sphere.SetInputConnection(sphere.GetOutputPort())
+    
+    
     sphere_mapper = vtk.vtkPolyDataMapper()
-    sphere_mapper.SetInputConnection(sphere.GetOutputPort())
+    sphere_mapper.SetInputConnection(map_to_sphere.GetOutputPort())
+    
+    
     sphere_actor = vtk.vtkActor()
     sphere_actor.SetMapper(sphere_mapper)
-    # sphere_actor.GetProperty().SetColor(1, 1, 0)
     sphere_actor.SetTexture(texture)
-
-    # sphere_source.SetThetaResolution(resolution_theta)
-    # sphere_source.SetPhiResolution(resolution_phi)
     
     
     
@@ -155,12 +171,12 @@ def make_map(elevation, image):
     
     
     colorMapper = vtk.vtkDataSetMapper()
-    # colorMapper.SetInputConnection(isoContour.GetOutputPort())
     colorMapper.SetInputData(curves)
     colorMapper.SetLookupTable(colorTable)
     
     tubesActor = vtk.vtkActor()
     tubesActor.SetMapper(colorMapper)
+    tubesActor.SetTexture(texture)
     
     
     return [tubes, elevationActor, tubesActor, sphere_actor]
