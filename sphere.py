@@ -234,7 +234,7 @@ class PyQtDemo(QMainWindow):
         curves = cfilter.GetOutput()
         arr = curves.GetPoints().GetData()
         self.arrnp = numpy_support.vtk_to_numpy(arr)
-        radius = 6356000
+        radius = 6358000
         self.radius = radius
         coor_sphere = convert(arr=self.arrnp, r=self.radius)
         
