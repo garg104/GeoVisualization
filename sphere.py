@@ -234,7 +234,7 @@ class PyQtDemo(QMainWindow):
         curves = cfilter.GetOutput()
         arr = curves.GetPoints().GetData()
         self.arrnp = numpy_support.vtk_to_numpy(arr)
-        radius = 6358002
+        radius = 6356000
         self.radius = radius
         coor_sphere = convert(arr=self.arrnp, r=self.radius)
         
@@ -253,14 +253,14 @@ class PyQtDemo(QMainWindow):
         ctf.SetColorSpaceToRGB()
         ctf.AddRGBPoint(0, 1, 0, 0)
         ctf.AddRGBPoint(10, 1, 1, 1)
-        ctf.AddRGBPoint(25,1,0,0)
-        ctf.AddRGBPoint(50,1,0,0)
-        ctf.AddRGBPoint(75,1,0,0)
+        ctf.AddRGBPoint(25,1,1,1)
+        ctf.AddRGBPoint(50,1,1,1)
+        ctf.AddRGBPoint(75,1,1,1)
         ctf.AddRGBPoint(100, 0.1, 0.1, 1)
         ctf.AddRGBPoint(110, 1, 1, 1)
-        ctf.AddRGBPoint(125,1,0,0)
-        ctf.AddRGBPoint(150,1,0,0)
-        ctf.AddRGBPoint(175,1,0,0)
+        ctf.AddRGBPoint(125,1,1,1)
+        ctf.AddRGBPoint(150,1,1,1)
+        ctf.AddRGBPoint(175,1,1,1)
         ctf.AddRGBPoint(200, 0.6, 0.6, 0.6)
         ctf.AddRGBPoint(300, 0.1, 0.9, 0.3)
         ctf.AddRGBPoint(500, 1, 0.6, .1)
