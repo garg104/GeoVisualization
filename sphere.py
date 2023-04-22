@@ -158,7 +158,7 @@ class PyQtDemo(QMainWindow):
         # ireader.SetFileName(args.geometry)
         # ireader.SetFileName("elevation_large.vti")
         
-        ireader.SetFileName("data/elevation_sphere_large.vtp")
+        ireader.SetFileName("data/elevation/elevation_sphere_large.vtp")
         ireader.Update()
 
 
@@ -170,9 +170,9 @@ class PyQtDemo(QMainWindow):
 
         sreader=vtk.vtkJPEGReader()
         # sreader.SetFileName(args.image)
-        file_name = "data/vegetation_"+str(self.year)+".jpg"
+        file_name = "data/vegetation/vegetation_"+str(self.year)+".jpg"
         sreader.SetFileName(file_name)
-        self.file = "vegetation_"
+        self.file = "vegetation/vegetation_"
         self.sreader = sreader
 
         texture=vtk.vtkTexture()
@@ -321,7 +321,7 @@ class PyQtDemo(QMainWindow):
             slider.setRange(bounds[0], bounds[1])
 
         
-        slider_setup(self.ui.slider_year, self.scale, [2000, 2020], 1000)
+        slider_setup(self.ui.slider_year, self.year, [2000, 2023], 1)
         # slider_setup(self.ui.slider_radius, self.radius, [2000, 2020], 5)
         # slider_setup(self.ui.slider_phi, self.phi, [3, 200], 10)
         # slider_setup(self.ui.slider_radius, self.radius*100, [1, 10], 2)
@@ -343,8 +343,8 @@ class PyQtDemo(QMainWindow):
 
     def combo_callback(self, val):
         print("Combo selected :" , val)
-        if val == 0 : self.file="vegetation_" 
-        else : self.file = "surface_temp_"  
+        if val == 0 : self.file="vegetation/vegetation_" 
+        else : self.file = "temp/surface_temp_"  
         file_name = "data/"+self.file+str(self.year)+".jpg"
         self.sreader.SetFileName(file_name)
         self.ui.log.insertPlainText("File Updated to {}".format(file_name))
