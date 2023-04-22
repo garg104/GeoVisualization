@@ -221,9 +221,10 @@ class PyQtDemo(QMainWindow):
         
 
         rainReader=vtk.vtkXMLImageDataReader()
-        rainReader.SetFileName("data/rainVTI/rain_23.vti")
+        rainReader.SetFileName("data/rainVTI/rain_2021.vti")
+        
+        rainReader.Update()
         self.rainReader = rainReader
-        # rainReader.Update()
         self.rainFile = "data/rainVTI/rain_"
        
         arrele = rainReader.GetOutput().GetPointData().GetArray(0)
@@ -231,9 +232,11 @@ class PyQtDemo(QMainWindow):
         # self.warp = warp
         #contour
         cfilter = vtk.vtkContourFilter()
+        
         cfilter.SetInputConnection(rainReader.GetOutputPort())
         cfilter.GenerateValues(30, 0, 1500)
         cfilter.Update()
+        self.cfilter = cfilter
         curves = cfilter.GetOutput()
         arr = curves.GetPoints().GetData()
         self.arrnp = numpy_support.vtk_to_numpy(arr)
@@ -365,12 +368,15 @@ class PyQtDemo(QMainWindow):
         self.year = val
         file_name = "data/"+self.file+str(self.year)+".jpg"
         self.sreader.SetFileName(file_name)
+        self.sreader.Update()
         self.ui.log.insertPlainText("File Updated to {}".format(file_name))
 
-        self.ui.vtkWidget.GetRenderWindow().Render()
-        yr = int(self.year)-2000
-        print("File updated : "+"data/rainVTI/rain_"+str(yr)+".vti")
-        self.rainReader.SetFileName("data/rainVTI/rain_"+str(yr)+".vti")
+        # self.ui.vtkWidget.GetRenderWindow().Render()
+        # yr = int(self.year)-2000
+        print("File updated : "+"data/rainVTI/rain_"+str(self.year)+".vti")
+        self.rainReader.SetFileName("data/rainVTI/rain_"+str(self.year)+".vti")
+        self.rainReader.Update()
+        self.cfilter.SetInputConnection(self.rainReader.GetOutputPort())
         
 
         self.ui.vtkWidget.GetRenderWindow().Render()
