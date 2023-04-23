@@ -18,6 +18,10 @@ from vtk.util import numpy_support
 
 
 frame_counter = 0
+veg_rgb = [
+            [194, 178, 128],
+            [168, 166, 92]
+        ]      
 rgb255 = [
             [13, 8, 135],
             [38, 5, 145],
@@ -84,6 +88,17 @@ def make_sphere(resolution_theta, resolution_phi, edge_radius):
     edge_tubes.SetRadius(edge_radius)
     edge_tubes.SetInputConnection(edge_extractor.GetOutputPort())
     return [sphere_source, edge_tubes]
+
+def make_vegetation_table(rgb_list):
+    rgb = []
+    for i in range(len(veg_rgb)):
+        rgb.append([veg_rgb[i][0] / 255, veg_rgb[i][1] / 255, veg_rgb[i][2] / 255])
+
+    ctf =  vtk.vtkColorTransferFunction()
+    ctf.SetColorSpaceToRGB() 
+    ctf.AddRGBPoint(-0.1,rgb[0][0],rgb[0][1],rgb[0][2])
+    ctf.AddRGBPoint(0.9,rgb[0][0],rgb[0][1],rgb[0][2])
+    return ctf
 
 
 def make_color_table():
@@ -293,6 +308,7 @@ class PyQtDemo(QMainWindow):
         if not self.ui.toggle_button.isChecked():
             self.ren.AddActor(self.cactor)
             self.ren.AddActor(self.colorbar_actor)
+            self.ren.AddActor(self.colorbar_actor_veg)
 
 
     def __init__(self, parent = None):
@@ -342,6 +358,12 @@ class PyQtDemo(QMainWindow):
         colorbarparam = colorbar_param(title = "Rainfall")
         colorbar_actor = colorbar(ctf,colorbarparam).get()
 
+        veg_ctf = make_vegetation_table(veg_rgb)
+        colorbarparam_veg = colorbar_param(title = "Vegetation",pos=[0.1,0.5])
+        colorbar_actor_veg = colorbar(veg_ctf,colorbarparam_veg).get()
+
+
+
 
         curves = isoContoursGen(fileName="data/rainVTI/rain_2021.vti")
 
@@ -373,6 +395,7 @@ class PyQtDemo(QMainWindow):
         self.iactor = iactor
         self.cactor = cactor
         self.colorbar_actor = colorbar_actor
+        self.colorbar_actor_veg = colorbar_actor_veg
         
         self.ren.AddActor(self.iactor)
         PyQtDemo.addActors(self=self)        
