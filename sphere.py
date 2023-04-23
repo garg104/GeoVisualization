@@ -18,6 +18,150 @@ from vtk.util import numpy_support
 
 
 frame_counter = 0
+rgb255 = [
+            [13, 8, 135],
+            [38, 5, 145],
+            [58, 4, 154],
+            [76, 2, 161],
+            [92, 1, 166],
+            [110, 0, 168],
+            [126, 3, 168],
+            [141, 11, 165],
+            [156, 23, 158],
+            [170, 35, 149],
+            [181, 47, 140],
+            [193, 59, 131],
+            [204, 71, 120],
+            [213, 83, 111],
+            [222, 95, 101],
+            [230, 108, 92],
+            [237, 121, 83],
+            [243, 135, 74],
+            [248, 149, 64],
+            [252, 163, 56],
+            [253, 180, 47],
+            [253, 197, 39],
+            [251, 213, 36],
+            [246, 232, 38],
+            [240, 249, 33],
+        ]
+
+
+####################################################
+
+
+def convert(arr, r):
+    
+    a = []
+    for temp in arr:
+        # print(temp)
+        x = temp[0]+180 # long
+        y = temp[1] # lat
+        x_new = r * np.cos(x * np.pi/180) * np.cos(y * np.pi/180)
+        y_new = r * np.sin(x * np.pi/180) * np.cos(y * np.pi/180)
+        z_new = r * np.sin(y * np.pi/180)
+        temp2 = np.array([x_new, y_new, z_new], dtype=np.float32)
+        a.append(temp2)
+       
+    aa = np.asarray(a)
+    aaa = numpy_support.numpy_to_vtk(aa) 
+
+    return aaa
+
+
+def make_sphere(resolution_theta, resolution_phi, edge_radius):
+    # create and visualize sphere
+    sphere_source = vtk.vtkSphereSource()
+    sphere_source.SetRadius(1.0)
+    sphere_source.SetCenter(0.0, 0.0, 0.0)
+    sphere_source.SetThetaResolution(resolution_theta)
+    sphere_source.SetPhiResolution(resolution_phi)
+
+    # extract and visualize the edges
+    edge_extractor = vtk.vtkExtractEdges()
+    edge_extractor.SetInputConnection(sphere_source.GetOutputPort())
+    edge_tubes = vtk.vtkTubeFilter()
+    edge_tubes.SetRadius(edge_radius)
+    edge_tubes.SetInputConnection(edge_extractor.GetOutputPort())
+    return [sphere_source, edge_tubes]
+
+
+def make_color_table():
+    
+     
+    rgb = []
+    for i in range(len(rgb255)):
+        rgb.append([rgb255[i][0] / 255, rgb255[i][1] / 255, rgb255[i][2] / 255])
+        
+    ctf =  vtk.vtkColorTransferFunction()
+    ctf.SetColorSpaceToRGB()
+    ctf.AddRGBPoint(0, rgb[0][0], rgb[0][1], rgb[0][2])
+    ctf.AddRGBPoint(10, rgb[1][0], rgb[1][1], rgb[1][2])
+    ctf.AddRGBPoint(25, rgb[2][0], rgb[2][1], rgb[2][2])
+    ctf.AddRGBPoint(75, rgb[3][0], rgb[3][1], rgb[3][2])
+    ctf.AddRGBPoint(100, rgb[4][0], rgb[4][1], rgb[4][2])
+    ctf.AddRGBPoint(110,rgb[5][0], rgb[5][1], rgb[5][2])  
+    ctf.AddRGBPoint(125,rgb[6][0], rgb[6][1], rgb[6][2]) 
+    ctf.AddRGBPoint(150,rgb[7][0], rgb[7][1], rgb[7][2]) 
+    ctf.AddRGBPoint(170,rgb[8][0], rgb[8][1], rgb[8][2]) 
+    ctf.AddRGBPoint(200,rgb[9][0], rgb[9][1], rgb[9][2]) 
+    ctf.AddRGBPoint(250,rgb[10][0], rgb[10][1], rgb[10][2])   
+    ctf.AddRGBPoint(300,rgb[11][0], rgb[11][1], rgb[11][2])   
+    ctf.AddRGBPoint(400,rgb[12][0], rgb[12][1], rgb[12][2])  
+    ctf.AddRGBPoint(500,rgb[13][0], rgb[13][1], rgb[13][2])   
+    ctf.AddRGBPoint(600,rgb[14][0], rgb[14][1], rgb[14][2])  
+    ctf.AddRGBPoint(700,rgb[15][0], rgb[15][1], rgb[15][2]) 
+    ctf.AddRGBPoint(750,rgb[16][0], rgb[16][1], rgb[16][2]) 
+    ctf.AddRGBPoint(800,rgb[17][0], rgb[17][1], rgb[17][2]) 
+    ctf.AddRGBPoint(900,rgb[18][0], rgb[18][1], rgb[18][2]) 
+    ctf.AddRGBPoint(1000,rgb[19][0], rgb[19][1], rgb[19][2]) 
+    ctf.AddRGBPoint(1100,rgb[20][0], rgb[20][1], rgb[20][2])
+    ctf.AddRGBPoint(1200,rgb[21][0], rgb[21][1], rgb[21][2])
+    ctf.AddRGBPoint(1300,rgb[22][0], rgb[22][1], rgb[22][2])
+    ctf.AddRGBPoint(1400,rgb[23][0], rgb[23][1], rgb[23][2])
+    ctf.AddRGBPoint(1500,rgb[24][0], rgb[24][1], rgb[24][2])
+    
+    
+    return ctf
+
+
+def isoContoursGen(fileName):
+    rainReader=vtk.vtkXMLImageDataReader()
+    rainReader.SetFileName(fileName)
+    # data/rainVTI/rain_2021.vti
+
+    rainReader.Update()
+    rainReader = rainReader
+    rainFile = "data/rainVTI/rain_"
+    
+    arrele = rainReader.GetOutput().GetPointData().GetArray(0)
+    
+    # self.warp = warp
+    #contour
+    cfilter = vtk.vtkContourFilter()
+    
+    cfilter.SetInputConnection(rainReader.GetOutputPort())
+    cfilter.GenerateValues(30, 0, 1500)
+    cfilter.Update()
+    cfilter = cfilter
+    curves = cfilter.GetOutput()
+    arr = curves.GetPoints().GetData()
+    arrnp = numpy_support.vtk_to_numpy(arr)
+    radius = 6368000
+    # self.radius = radius
+    coor_sphere = convert(arr=arrnp, r=radius)
+    
+    curves.GetPoints().SetData(coor_sphere)
+
+    return curves
+
+
+####################################################
+
+
+
+
+####################################################
 
 class colorbar_param:
     def __init__(self, title='No title', title_col=[1,1,1], title_font_size=22, label_col=[1,1,1], pos=[0.9, 0.5], width=80, height=400, nlabels=4, font_size=18, title_offset=10):
@@ -31,6 +175,7 @@ class colorbar_param:
         self.font_size=font_size
         self.title_offset=title_offset
         self.title_font_size=title_font_size
+
 
 class colorbar:
     def __init__(self, ctf, param, is_float=True):
@@ -71,46 +216,6 @@ class colorbar:
         return self.scalar_bar
 
 
-def convert(arr, r):
-    
-    a = []
-    for temp in arr:
-        # print(temp)
-        # x - long, theta = long x, phi-lat y
-        x = temp[0]+180 # long
-        y = temp[1] # lat
-        # x_new = r * np.sin(x * np.pi/180) * np.cos(y * np.pi/180)
-        # y_new = r * np.sin(x * np.pi/180) * np.sin(y * np.pi/180)
-        # z_new = r * np.cos(x * np.pi/180)
-        x_new = r * np.cos(x * np.pi/180) * np.cos(y * np.pi/180)
-        y_new = r * np.sin(x * np.pi/180) * np.cos(y * np.pi/180)
-        z_new = r * np.sin(y * np.pi/180)
-        temp2 = np.array([x_new, y_new, z_new], dtype=np.float32)
-        a.append(temp2)
-       
-    aa = np.asarray(a)
-    aaa = numpy_support.numpy_to_vtk(aa) 
-
-    return aaa
-
-def make_sphere(resolution_theta, resolution_phi, edge_radius):
-    # create and visualize sphere
-    sphere_source = vtk.vtkSphereSource()
-    sphere_source.SetRadius(1.0)
-    sphere_source.SetCenter(0.0, 0.0, 0.0)
-    sphere_source.SetThetaResolution(resolution_theta)
-    sphere_source.SetPhiResolution(resolution_phi)
-
-    # extract and visualize the edges
-    edge_extractor = vtk.vtkExtractEdges()
-    edge_extractor.SetInputConnection(sphere_source.GetOutputPort())
-    edge_tubes = vtk.vtkTubeFilter()
-    edge_tubes.SetRadius(edge_radius)
-    edge_tubes.SetInputConnection(edge_extractor.GetOutputPort())
-    return [sphere_source, edge_tubes]
-
-
-
 class Ui_MainWindow(object):
     # global toggle_button
     def setupUi(self, MainWindow):
@@ -135,18 +240,7 @@ class Ui_MainWindow(object):
         self.toggle_button.setText('Disable Rainfall')
         self.toggle_button.setCheckable(True)
         # toggle_button = self.toggle_button1
- 
-        # self.slider_radius = QSlider()
-        # self.slider_phi = QSlider()
-        # self.slider_radius = QSlider()
-        # Push buttons
-        # self.push_screenshot = QPushButton()
-        # self.push_screenshot.setText('Save screenshot')
-        # self.push_camera = QPushButton()
-        # self.push_camera.setText('Update camera info')
-        # self.push_quit = QPushButton()
-        # self.push_quit.setText('Quit')
-        # Text windows
+
         self.camera_info = QTextEdit()
         self.camera_info.setReadOnly(True)
         self.camera_info.setAcceptRichText(True)
@@ -178,64 +272,17 @@ class Ui_MainWindow(object):
         self.gridlayout.addWidget(self.toggle_button, 7, 1, 1, 1)
 
     
-        # self.gridlayout.addWidget(QLabel("Radius Value"), 7, 0, 1, 1)
-        # self.gridlayout.addWidget(self.slider_radius, 7, 1, 1, 1)
-
-        
-        # self.label = self.slider_year
-        # self.gridlayout.addWidget(QLabel("Year Value Selected"), 5, 2, 1, 1)
-        # self.gridlayout.addWidget(self.label, 5, 3, 1, 1)
-
-
-
-
-        # self.gridlayout.addWidget(QLabel("Phi resolution"), 5, 0, 1, 1)
-        # self.gridlayout.addWidget(self.slider_phi, 5, 1, 1, 1)
-        # self.gridlayout.addWidget(QLabel("Edge radius"), 4, 2, 1, 1)
-        # self.gridlayout.addWidget(self.slider_radius, 4, 3, 1, 1)
-        # self.gridlayout.addWidget(self.push_screenshot, 0, 5, 1, 1)
-        # self.gridlayout.addWidget(self.push_camera, 1, 5, 1, 1)
-        # self.gridlayout.addWidget(self.camera_info, 2, 4, 1, 2)
-        # self.gridlayout.addWidget(self.log, 3, 4, 1, 2)
-        # self.gridlayout.addWidget(self.push_quit, 5, 5, 1, 1)
         MainWindow.setCentralWidget(self.centralWidget)
 
 
 
-
-def isoContoursGen(fileName):
-    rainReader=vtk.vtkXMLImageDataReader()
-    rainReader.SetFileName(fileName)
-    # data/rainVTI/rain_2021.vti
-
-    rainReader.Update()
-    rainReader = rainReader
-    rainFile = "data/rainVTI/rain_"
-    
-    arrele = rainReader.GetOutput().GetPointData().GetArray(0)
-    
-    # self.warp = warp
-    #contour
-    cfilter = vtk.vtkContourFilter()
-    
-    cfilter.SetInputConnection(rainReader.GetOutputPort())
-    cfilter.GenerateValues(30, 0, 1500)
-    cfilter.Update()
-    cfilter = cfilter
-    curves = cfilter.GetOutput()
-    arr = curves.GetPoints().GetData()
-    arrnp = numpy_support.vtk_to_numpy(arr)
-    radius = 6368000
-    # self.radius = radius
-    coor_sphere = convert(arr=arrnp, r=radius)
-    
-    curves.GetPoints().SetData(coor_sphere)
-
-    return curves
-
-
 class PyQtDemo(QMainWindow):
     global renderer
+    
+    def addActors(self):
+        if not self.ui.toggle_button.isChecked():
+            self.ren.AddActor(self.cactor)
+            self.ren.AddActor(self.colorbar_actor)
 
     def __init__(self, parent = None):
         QMainWindow.__init__(self, parent)
@@ -254,10 +301,6 @@ class PyQtDemo(QMainWindow):
         ireader.SetFileName("data/elevation/elevation_sphere_large.vtp")
         ireader.Update()
 
-
-
-        output=ireader.GetOutput()
-        scalars=output.GetPointData().GetScalars()
 
         sreader=vtk.vtkJPEGReader()
         file_name = "data/vegetation/vegetation_"+str(self.year)+".jpg"
@@ -286,77 +329,14 @@ class PyQtDemo(QMainWindow):
         iactor=vtk.vtkActor()
         iactor.SetMapper(imapper)
         iactor.SetTexture(texture)
-    
-        curves = isoContoursGen(fileName="data/rainVTI/rain_2021.vti")
-
         
-        rgb255 = [
-            [13, 8, 135],
-            [38, 5, 145],
-            [58, 4, 154],
-            [76, 2, 161],
-            [92, 1, 166],
-            [110, 0, 168],
-            [126, 3, 168],
-            [141, 11, 165],
-            [156, 23, 158],
-            [170, 35, 149],
-            [181, 47, 140],
-            [193, 59, 131],
-            [204, 71, 120],
-            [213, 83, 111],
-            [222, 95, 101],
-            [230, 108, 92],
-            [237, 121, 83],
-            [243, 135, 74],
-            [248, 149, 64],
-            [252, 163, 56],
-            [253, 180, 47],
-            [253, 197, 39],
-            [251, 213, 36],
-            [246, 232, 38],
-            [240, 249, 33],
-        ]
-        
-        rgb = []
-        for i in range(len(rgb255)):
-            rgb.append([rgb255[i][0] / 255, rgb255[i][1] / 255, rgb255[i][2] / 255])
-            
-        # import pdb
-        # pdb.set_trace()
 
-        #color tubes
-        ctf =  vtk.vtkColorTransferFunction()
-        ctf.SetColorSpaceToRGB()
-        ctf.AddRGBPoint(0, rgb[0][0], rgb[0][1], rgb[0][2])
-        ctf.AddRGBPoint(10, rgb[1][0], rgb[1][1], rgb[1][2])
-        ctf.AddRGBPoint(25, rgb[2][0], rgb[2][1], rgb[2][2])
-        ctf.AddRGBPoint(75, rgb[3][0], rgb[3][1], rgb[3][2])
-        ctf.AddRGBPoint(100, rgb[4][0], rgb[4][1], rgb[4][2])
-        ctf.AddRGBPoint(110,rgb[5][0], rgb[5][1], rgb[5][2])  
-        ctf.AddRGBPoint(125,rgb[6][0], rgb[6][1], rgb[6][2]) 
-        ctf.AddRGBPoint(150,rgb[7][0], rgb[7][1], rgb[7][2]) 
-        ctf.AddRGBPoint(170,rgb[8][0], rgb[8][1], rgb[8][2]) 
-        ctf.AddRGBPoint(200,rgb[9][0], rgb[9][1], rgb[9][2]) 
-        ctf.AddRGBPoint(250,rgb[10][0], rgb[10][1], rgb[10][2])   
-        ctf.AddRGBPoint(300,rgb[11][0], rgb[11][1], rgb[11][2])   
-        ctf.AddRGBPoint(400,rgb[12][0], rgb[12][1], rgb[12][2])  
-        ctf.AddRGBPoint(500,rgb[13][0], rgb[13][1], rgb[13][2])   
-        ctf.AddRGBPoint(600,rgb[14][0], rgb[14][1], rgb[14][2])  
-        ctf.AddRGBPoint(700,rgb[15][0], rgb[15][1], rgb[15][2]) 
-        ctf.AddRGBPoint(750,rgb[16][0], rgb[16][1], rgb[16][2]) 
-        ctf.AddRGBPoint(800,rgb[17][0], rgb[17][1], rgb[17][2]) 
-        ctf.AddRGBPoint(900,rgb[18][0], rgb[18][1], rgb[18][2]) 
-        ctf.AddRGBPoint(1000,rgb[19][0], rgb[19][1], rgb[19][2]) 
-        ctf.AddRGBPoint(1100,rgb[20][0], rgb[20][1], rgb[20][2])
-        ctf.AddRGBPoint(1200,rgb[21][0], rgb[21][1], rgb[21][2])
-        ctf.AddRGBPoint(1300,rgb[22][0], rgb[22][1], rgb[22][2])
-        ctf.AddRGBPoint(1400,rgb[23][0], rgb[23][1], rgb[23][2])
-        ctf.AddRGBPoint(1500,rgb[24][0], rgb[24][1], rgb[24][2])
-
-        #color bar
+        ctf = make_color_table()
         colorbarparam = colorbar_param(title = "Rainfall")
         colorbar_actor = colorbar(ctf,colorbarparam).get()
+
+
+        curves = isoContoursGen(fileName="data/rainVTI/rain_2021.vti")
 
         cmapper=vtk.vtkPolyDataMapper() 
         cmapper.SetInputData(curves)
@@ -381,14 +361,15 @@ class PyQtDemo(QMainWindow):
         camera.SetViewUp(-0.28714312753228705, 0.43288884593951726, 0.8544917035127549)
         camera.SetClippingRange(4602250.824907519, 48508541.6215622)
         
-
         iactor.GetProperty().SetOpacity(1)
-        self.ren.AddActor(iactor)
-        if not self.ui.toggle_button.isChecked():
-            self.ren.AddActor(cactor)
-            self.ren.AddActor(colorbar_actor)
+            
+        self.iactor = iactor
         self.cactor = cactor
         self.colorbar_actor = colorbar_actor
+        
+        self.ren.AddActor(self.iactor)
+        PyQtDemo.addActors(self=self)        
+        
         self.ren.GradientBackgroundOn()  # Set gradient for background
         self.ren.SetBackground(0.75, 0.75, 0.75)  # Set background to silver
         self.ui.vtkWidget.GetRenderWindow().AddRenderer(self.ren)
@@ -405,24 +386,6 @@ class PyQtDemo(QMainWindow):
 
         
         slider_setup(self.ui.slider_year, self.year, [2000, 2023], 1)
-        # slider_setup(self.ui.slider_radius, self.radius, [2000, 2020], 5)
-        # slider_setup(self.ui.slider_phi, self.phi, [3, 200], 10)
-        # slider_setup(self.ui.slider_radius, self.radius*100, [1, 10], 2)
-
-    def scale_callback(self, val):
-        # print("Year selected :" , val)
-        self.scale = val
-        self.warp.SetScaleFactor(self.scale)
-        self.ui.log.insertPlainText('Theta resolution set to {}\n'.format(self.scale))
-        self.ui.vtkWidget.GetRenderWindow().Render()
-
-    def radius_callback(self, val):
-        # print("Year selected :" , val)
-        self.radius = val
-        
-        
-        # self.ui.log.insertPlainText('Theta resolution set to {}\n'.format(self.scale))
-        self.ui.vtkWidget.GetRenderWindow().Render()
 
     def combo_callback(self, val):
         print("Combo selected :" , val)
@@ -451,70 +414,46 @@ class PyQtDemo(QMainWindow):
 
         # self.ui.vtkWidget.GetRenderWindow().Render()
         # yr = int(self.year)-2000
-        if window.ui.toggle_button.isChecked():
-            print("File updated : "+"data/rainVTI/rain_"+str(self.year)+".vti")
-            file = "data/rainVTI/rain_"+str(self.year)+".vti"
-            curves = isoContoursGen(fileName=file)
-            self.cmapper.SetInputData(curves)
-        
-        # self.rainReader.SetFileName("data/rainVTI/rain_"+str(self.year)+".vti")
-        # self.rainReader.Update()
-        # self.cfilter.SetInputConnection(self.rainReader.GetOutputPort())
-
-        
+        # if window.ui.toggle_button.isChecked():
+        print("File updated : "+"data/rainVTI/rain_"+str(self.year)+".vti")
+        file = "data/rainVTI/rain_"+str(self.year)+".vti"
+        curves = isoContoursGen(fileName=file)
+        self.cmapper.SetInputData(curves)
 
         self.ui.vtkWidget.GetRenderWindow().Render()
-        # self.scale = val
-        # self.warp.SetScaleFactor(self.scale)
-        # self.ui.log.insertPlainText('Theta resolution set to {}\n'.format(self.scale))
-        # self.ui.vtkWidget.GetRenderWindow().Render()
-    # def phi_callback(self, val):
-    #     self.phi = val
-    #     self.sphere.SetPhiResolution(self.phi)
-    #     self.ui.log.insertPlainText('Phi resolution set to {}\n'.format(self.phi))
-    #     self.ui.vtkWidget.GetRenderWindow().Render()
 
-    # def radius_callback(self, val):
-    #     self.radius = val/1000.
-    #     self.edges.SetRadius(self.radius)
-    #     self.ui.log.insertPlainText('Edge radius set to {}\n'.format(self.radius))
-    #     self.ui.vtkWidget.GetRenderWindow().Render()
-
-    # def screenshot_callback(self):
-    #     save_frame(self.ui.vtkWidget.GetRenderWindow(), self.ui.log)
 
     def camera_callback(self):
         print_camera_settings(self.ren.GetActiveCamera(), self.ui.camera_info, self.ui.log)
 
+
     def toggle_callback(self):
         print("Toggle Called")
-        if window.ui.toggle_button.isChecked():
-            # setting background color to light-blue
-            # self.button.setStyleSheet("background-color : lightblue")
-
-            window.ui.toggle_button.setText("Enable Rainfall ")
-            file = "data/rainVTI/rain_"+str(self.year)+".vti"
-            curves = isoContoursGen(fileName=file)
-            self.cmapper.SetInputData(curves)
- 
-        # if it is unchecked
-        else:
+        
+        self.addActors()
+        if not window.ui.toggle_button.isChecked():
+            print("Added")
+            self.ren.AddActor(self.cactor)
+            self.ren.AddActor(self.colorbar_actor)
             window.ui.toggle_button.setText("Disable Rainfall ")
+        else:
+            # self.cactor.SetVisibility(False)
+            # self.colorbar_actor.SetVisibility(False)
             self.ren.RemoveActor(self.cactor)
             self.ren.RemoveActor(self.colorbar_actor)
-            self.ui.vtkWidget.GetRenderWindow().Render()
-            # file = "data/rainVTI/rain_"+str(self.year)+".vti"
-            # curves = isoContoursGen(fileName="")
-            # self.cmapper.SetInputData(curves)
-            # set background color back to light-grey
-            # self.button.setStyleSheet("background-color : lightgrey")
+            window.ui.toggle_button.setText("Enable Rainfall ")
+            print("Removed")
+
+
+####################################################
  
-        # print_camera_settings(self.ren.GetActiveCamera(), self.ui.camera_info, self.ui.log)
-
-    
-
-    # def quit_callback(self):
-    #     sys.exit()
+ 
+ 
+ 
+ 
+####################################################
+ 
+ 
 def print_camera_settings():
     global renderer
     # ---------------------------------------------------------------
@@ -547,13 +486,20 @@ def save_frame():
     # Save current contents of render window to PNG file
     # --------------------------------------------------------------
 
+
+####################################################
+
+
+
+
+####################################################
+
+
 if __name__=="__main__":
     global args
     # global renderer
 
     parser= argparse.ArgumentParser(description='Assignment 1 Task 1')
-    # parser.add_argument('-g','--geometry',type=str,help='Filename for heightfield')
-    # parser.add_argument('-i','--image',type=str,required=True,help='Filename for satellite imagery')
 
     args=parser.parse_args()
 
@@ -572,6 +518,7 @@ if __name__=="__main__":
 
     window.ui.slider_year.valueChanged.connect(window.year_callback)
     window.ui.comboBox.activated.connect(window.combo_callback)
-    window.ui.slider_year.valueChanged.connect(window.radius_callback)
+    # window.ui.slider_year.valueChanged.connect(window.radius_callback)
     window.ui.toggle_button.clicked.connect(window.toggle_callback)
+    print(window.ui.toggle_button.isChecked())
     sys.exit(app.exec_())
