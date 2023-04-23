@@ -23,10 +23,17 @@ veg_rgb = [
             [168, 166, 92],
             [76, 187, 23], # kelly
             # [80, 200, 120], # emerald
-            [11, 102, 35] 
+            # [11, 102, 35] 
+            [129, 134, 74]
         ]     
 
 temp_rgb = [
+            [0,255,249],
+            [0,162,197],
+            [1,98,156],
+            [0,41,111],
+            [1,0,41],
+            [217,1,122],
             [237,23,23],
             [242,77,17],
             [246,131,12],
@@ -120,11 +127,17 @@ def make_temp_table():
 
     ctf =  vtk.vtkColorTransferFunction()
     ctf.SetColorSpaceToRGB() 
-    ctf.AddRGBPoint(10,rgb[0][0],rgb[0][1],rgb[0][2])
-    ctf.AddRGBPoint(15,rgb[1][0],rgb[1][1],rgb[1][2])
-    ctf.AddRGBPoint(25,rgb[2][0],rgb[2][1],rgb[2][2])
-    ctf.AddRGBPoint(35,rgb[3][0],rgb[3][1],rgb[3][2])
-    ctf.AddRGBPoint(45,rgb[4][0],rgb[4][1],rgb[4][2])
+    ctf.AddRGBPoint(-25,rgb[0][0],rgb[0][1],rgb[0][2])
+    ctf.AddRGBPoint(-15,rgb[1][0],rgb[1][1],rgb[1][2])
+    ctf.AddRGBPoint(-10,rgb[2][0],rgb[2][1],rgb[2][2])
+    ctf.AddRGBPoint(-5,rgb[3][0],rgb[3][1],rgb[3][2])
+    ctf.AddRGBPoint(0,rgb[4][0],rgb[4][1],rgb[4][2])
+    ctf.AddRGBPoint(5,rgb[5][0],rgb[5][1],rgb[5][2])
+    ctf.AddRGBPoint(10,rgb[6][0],rgb[6][1],rgb[6][2])
+    ctf.AddRGBPoint(15,rgb[7][0],rgb[7][1],rgb[7][2])
+    ctf.AddRGBPoint(25,rgb[8][0],rgb[8][1],rgb[8][2])
+    ctf.AddRGBPoint(35,rgb[9][0],rgb[9][1],rgb[9][2])
+    ctf.AddRGBPoint(45,rgb[10][0],rgb[10][1],rgb[10][2])
     return ctf
 
 
