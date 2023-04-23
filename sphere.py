@@ -20,7 +20,10 @@ from vtk.util import numpy_support
 frame_counter = 0
 veg_rgb = [
             [194, 178, 128],
-            [168, 166, 92]
+            [168, 166, 92],
+            [76, 187, 23], # kelly
+            # [80, 200, 120], # emerald
+            [11, 102, 35] 
         ]      
 rgb255 = [
             [13, 8, 135],
@@ -97,7 +100,10 @@ def make_vegetation_table(rgb_list):
     ctf =  vtk.vtkColorTransferFunction()
     ctf.SetColorSpaceToRGB() 
     ctf.AddRGBPoint(-0.1,rgb[0][0],rgb[0][1],rgb[0][2])
-    ctf.AddRGBPoint(0.9,rgb[1][0],rgb[1][1],rgb[1][2])
+    ctf.AddRGBPoint(0.45,rgb[1][0],rgb[1][1],rgb[1][2])
+    ctf.AddRGBPoint(0.6,rgb[2][0],rgb[2][1],rgb[2][2])
+    # ctf.AddRGBPoint(0.75,rgb[3][0],rgb[3][1],rgb[3][2])
+    ctf.AddRGBPoint(0.9,rgb[3][0],rgb[3][1],rgb[3][2])
     return ctf
 
 
