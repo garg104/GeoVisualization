@@ -24,7 +24,15 @@ veg_rgb = [
             [76, 187, 23], # kelly
             # [80, 200, 120], # emerald
             [11, 102, 35] 
-        ]      
+        ]     
+
+temp_rgb = [
+            [237,23,23],
+            [242,77,17],
+            [246,131,12],
+            [251,184,6],
+            [255,238,0]
+            ] 
 rgb255 = [
             [68, 1, 84],
             [71, 16, 99],
@@ -91,7 +99,7 @@ def make_sphere(resolution_theta, resolution_phi, edge_radius):
     edge_tubes.SetInputConnection(edge_extractor.GetOutputPort())
     return [sphere_source, edge_tubes]
 
-def make_vegetation_table(rgb_list):
+def make_vegetation_table():
     rgb = []
     for i in range(len(veg_rgb)):
         rgb.append([veg_rgb[i][0] / 255, veg_rgb[i][1] / 255, veg_rgb[i][2] / 255])
@@ -103,6 +111,20 @@ def make_vegetation_table(rgb_list):
     ctf.AddRGBPoint(0.6,rgb[2][0],rgb[2][1],rgb[2][2])
     # ctf.AddRGBPoint(0.75,rgb[3][0],rgb[3][1],rgb[3][2])
     ctf.AddRGBPoint(0.9,rgb[3][0],rgb[3][1],rgb[3][2])
+    return ctf
+
+def make_temp_table():
+    rgb = []
+    for i in range(len(temp_rgb)):
+        rgb.append([temp_rgb[i][0] / 255, temp_rgb[i][1] / 255, temp_rgb[i][2] / 255])
+
+    ctf =  vtk.vtkColorTransferFunction()
+    ctf.SetColorSpaceToRGB() 
+    ctf.AddRGBPoint(10,rgb[0][0],rgb[0][1],rgb[0][2])
+    ctf.AddRGBPoint(15,rgb[1][0],rgb[1][1],rgb[1][2])
+    ctf.AddRGBPoint(25,rgb[2][0],rgb[2][1],rgb[2][2])
+    ctf.AddRGBPoint(35,rgb[3][0],rgb[3][1],rgb[3][2])
+    ctf.AddRGBPoint(45,rgb[4][0],rgb[4][1],rgb[4][2])
     return ctf
 
 
@@ -314,6 +336,7 @@ class PyQtDemo(QMainWindow):
             self.ren.AddActor(self.cactor)
             self.ren.AddActor(self.colorbar_actor)
             self.ren.AddActor(self.colorbar_actor_veg)
+            self.ren.AddActor(self.colorbar_actor_temp)
 
 
     def __init__(self, parent = None):
@@ -363,9 +386,13 @@ class PyQtDemo(QMainWindow):
         colorbarparam = colorbar_param(title = "Rainfall")
         colorbar_actor = colorbar(ctf,colorbarparam).get()
 
-        veg_ctf = make_vegetation_table(veg_rgb)
+        veg_ctf = make_vegetation_table()
         colorbarparam_veg = colorbar_param(title = "Vegetation",pos=[0.1,0.5])
         colorbar_actor_veg = colorbar(veg_ctf,colorbarparam_veg).get()
+
+        temp_ctf = make_temp_table()
+        colorbarparam_temp = colorbar_param(title = "Temperature",pos=[0.2,0.5])
+        colorbar_actor_temp = colorbar(temp_ctf,colorbarparam_temp).get()
 
 
 
@@ -401,6 +428,7 @@ class PyQtDemo(QMainWindow):
         self.cactor = cactor
         self.colorbar_actor = colorbar_actor
         self.colorbar_actor_veg = colorbar_actor_veg
+        self.colorbar_actor_temp = colorbar_actor_temp
         
         self.ren.AddActor(self.iactor)
         PyQtDemo.addActors(self=self)        
