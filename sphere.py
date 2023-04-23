@@ -255,14 +255,17 @@ class Ui_MainWindow(object):
         # grid layout. The top left corner is (0,0)
         # Here we specify that our vtkWidget is anchored to the top
         # left corner and spans 3 rows and 4 columns.
+        
+        
         self.gridlayout.addWidget(self.vtkWidget, 0, 0, 4, 4)
-        self.gridlayout.addWidget(QLabel("Year Value"), 4, 0, 1, 1)
-        self.gridlayout.addWidget(self.slider_year, 4, 1, 1, 1)
+        
+        self.gridlayout.addWidget(QLabel("Year: "), 4, 0, 1, 1)
+        self.gridlayout.addWidget(self.year_label, 4, 1, 1, 1)
+        self.year_label.setText("2000")
+        
+        self.gridlayout.addWidget(QLabel("Year Value"), 5, 0, 1, 1)
+        self.gridlayout.addWidget(self.slider_year, 5, 1, 1, 1)
 
-    
-        self.gridlayout.addWidget(QLabel("Year Value Selected : "), 5, 0, 1, 1)
-        self.gridlayout.addWidget(self.year_label, 5, 1, 1, 1)
-        self.year_label.setText("2023")
 
         self.comboBox = QComboBox()
         self.comboBox.addItem("Vegetation")
