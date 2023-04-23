@@ -97,7 +97,7 @@ def make_vegetation_table(rgb_list):
     ctf =  vtk.vtkColorTransferFunction()
     ctf.SetColorSpaceToRGB() 
     ctf.AddRGBPoint(-0.1,rgb[0][0],rgb[0][1],rgb[0][2])
-    ctf.AddRGBPoint(0.9,rgb[0][0],rgb[0][1],rgb[0][2])
+    ctf.AddRGBPoint(0.9,rgb[1][0],rgb[1][1],rgb[1][2])
     return ctf
 
 
