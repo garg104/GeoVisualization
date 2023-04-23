@@ -147,7 +147,7 @@ def isoContoursGen(fileName):
     curves = cfilter.GetOutput()
     arr = curves.GetPoints().GetData()
     arrnp = numpy_support.vtk_to_numpy(arr)
-    radius = 6368000
+    radius = 6385000
     # self.radius = radius
     coor_sphere = convert(arr=arrnp, r=radius)
     
@@ -239,6 +239,9 @@ class Ui_MainWindow(object):
         self.toggle_button = QPushButton()
         self.toggle_button.setText('Disable Rainfall')
         self.toggle_button.setCheckable(True)
+        self.toggle_button2 = QPushButton()
+        self.toggle_button2.setText('Disable Elevation')
+        self.toggle_button2.setCheckable(True)
         # toggle_button = self.toggle_button1
 
         self.camera_info = QTextEdit()
@@ -270,6 +273,10 @@ class Ui_MainWindow(object):
 
         self.gridlayout.addWidget(QLabel( "Disable Rainfall "), 7, 0, 1, 1)
         self.gridlayout.addWidget(self.toggle_button, 7, 1, 1, 1)
+        
+        
+        self.gridlayout.addWidget(QLabel( "Disable Elevation "), 8, 0, 1, 1)
+        self.gridlayout.addWidget(self.toggle_button2, 8, 1, 1, 1)
 
     
         MainWindow.setCentralWidget(self.centralWidget)
@@ -284,6 +291,7 @@ class PyQtDemo(QMainWindow):
             self.ren.AddActor(self.cactor)
             self.ren.AddActor(self.colorbar_actor)
 
+
     def __init__(self, parent = None):
         QMainWindow.__init__(self, parent)
         global renderer
@@ -292,8 +300,8 @@ class PyQtDemo(QMainWindow):
         self.ui.setupUi(self)
 
         #self.scale = args.scale
-        self.scale = 10
-        self.year = 2023
+        self.scale = 50
+        self.year = 2000
         
 
         # Source
@@ -316,11 +324,7 @@ class PyQtDemo(QMainWindow):
         warp.SetScaleFactor(self.scale)
         warp.Update()
         self.warp = warp
-        # if args.scale is None:
-        #     warp.SetScaleFactor(10)
-        # else:
-        #     warp.SetScaleFactor(args.scale)
-        #     warp.Update()
+        warp.SetScaleFactor(self.scale)
 
         imapper=vtk.vtkDataSetMapper() 
         imapper.SetInputConnection(warp.GetOutputPort())
@@ -384,8 +388,13 @@ class PyQtDemo(QMainWindow):
             slider.setTickPosition(QSlider.TicksAbove)
             slider.setRange(bounds[0], bounds[1])
 
+
+
+
+
         
-        slider_setup(self.ui.slider_year, self.year, [2000, 2023], 1)
+        slider_setup(self.ui.slider_year, self.year, [2000, 2022], 1)
+
 
     def combo_callback(self, val):
         print("Combo selected :" , val)
@@ -427,7 +436,7 @@ class PyQtDemo(QMainWindow):
         print_camera_settings(self.ren.GetActiveCamera(), self.ui.camera_info, self.ui.log)
 
 
-    def toggle_callback(self):
+    def toggle_callback_iso(self):
         print("Toggle Called")
         
         self.addActors()
@@ -443,6 +452,32 @@ class PyQtDemo(QMainWindow):
             self.ren.RemoveActor(self.colorbar_actor)
             window.ui.toggle_button.setText("Enable Rainfall ")
             print("Removed")
+            
+            
+    def toggle_callback_ele(self):
+        print("Toggle2 Called")
+        
+        self.addActors()
+        if window.ui.toggle_button2.isChecked():
+            print("Added2")
+            self.scale = 0
+            self.warp.SetScaleFactor(self.scale)
+            window.ui.toggle_button2.setText("Enable elevation ")
+        else:
+            self.scale = 50
+            self.warp.SetScaleFactor(self.scale)
+            window.ui.toggle_button2.setText("Disable elevation ")
+            print("Removed2")
+        
+        self.ui.vtkWidget.GetRenderWindow().Render()
+
+    # def scale_callback(self, val):
+    #     # print("Year selected :" , val)
+    #     self.scale = val
+    #     self.warp.SetScaleFactor(self.scale)
+    #     self.ui.log.insertPlainText('Theta resolution set to {}\n'.format(self.scale))
+    #     self.ui.vtkWidget.GetRenderWindow().Render()
+
 
 
 ####################################################
@@ -519,6 +554,7 @@ if __name__=="__main__":
     window.ui.slider_year.valueChanged.connect(window.year_callback)
     window.ui.comboBox.activated.connect(window.combo_callback)
     # window.ui.slider_year.valueChanged.connect(window.radius_callback)
-    window.ui.toggle_button.clicked.connect(window.toggle_callback)
+    window.ui.toggle_button.clicked.connect(window.toggle_callback_iso)
+    window.ui.toggle_button2.clicked.connect(window.toggle_callback_ele)
     print(window.ui.toggle_button.isChecked())
     sys.exit(app.exec_())
