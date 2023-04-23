@@ -403,7 +403,7 @@ class PyQtDemo(QMainWindow):
         colorbar_actor_veg = colorbar(veg_ctf,colorbarparam_veg).get()
 
         temp_ctf = make_temp_table()
-        colorbarparam_temp = colorbar_param(title = "Temperature",pos=[0.1,0.5])
+        colorbarparam_temp = colorbar_param(title = "Temperature (°C)",pos=[0.1,0.5])
         colorbar_actor_temp = colorbar(temp_ctf,colorbarparam_temp).get()
 
 
