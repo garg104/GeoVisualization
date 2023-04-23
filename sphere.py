@@ -335,8 +335,7 @@ class PyQtDemo(QMainWindow):
         if not self.ui.toggle_button.isChecked():
             self.ren.AddActor(self.cactor)
             self.ren.AddActor(self.colorbar_actor)
-            self.ren.AddActor(self.colorbar_actor_veg)
-            self.ren.AddActor(self.colorbar_actor_temp)
+            
 
 
     def __init__(self, parent = None):
@@ -391,7 +390,7 @@ class PyQtDemo(QMainWindow):
         colorbar_actor_veg = colorbar(veg_ctf,colorbarparam_veg).get()
 
         temp_ctf = make_temp_table()
-        colorbarparam_temp = colorbar_param(title = "Temperature",pos=[0.2,0.5])
+        colorbarparam_temp = colorbar_param(title = "Temperature",pos=[0.1,0.5])
         colorbar_actor_temp = colorbar(temp_ctf,colorbarparam_temp).get()
 
 
@@ -431,6 +430,7 @@ class PyQtDemo(QMainWindow):
         self.colorbar_actor_temp = colorbar_actor_temp
         
         self.ren.AddActor(self.iactor)
+        self.ren.AddActor(self.colorbar_actor_veg)
         PyQtDemo.addActors(self=self)        
         
         self.ren.GradientBackgroundOn()  # Set gradient for background
@@ -457,16 +457,19 @@ class PyQtDemo(QMainWindow):
 
     def combo_callback(self, val):
         print("Combo selected :" , val)
-        if val == 0 : self.file="vegetation/vegetation_" 
-        else : self.file = "temp/surface_temp_"  
+        if val == 0 : 
+            self.file="vegetation/vegetation_" 
+            self.ren.AddActor(self.colorbar_actor_veg)
+            self.ren.RemoveActor(self.colorbar_actor_temp)
+        else : 
+            self.file = "temp/surface_temp_"  
+            self.ren.AddActor(self.colorbar_actor_temp)
+            self.ren.RemoveActor(self.colorbar_actor_veg)            
+        
         file_name = "data/"+self.file+str(self.year)+".jpg"
         self.sreader.SetFileName(file_name)
         self.sreader.Update()
         self.ui.log.insertPlainText("File Updated to {}".format(file_name))
-        # self.year = val
-        # file_name = "data/surface_temp_"+str(self.year)+".jpg"
-        # self.sreader.SetFileName(file_name)
-        # self.ui.log.insertPlainText("File Updated to {}".format(file_name))
 
         self.ui.vtkWidget.GetRenderWindow().Render()
 
