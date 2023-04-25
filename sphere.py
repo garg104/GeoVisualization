@@ -16,8 +16,12 @@ import sys
 import numpy as np
 from vtk.util import numpy_support
 
+####################################################
+
+####################################################
 
 frame_counter = 0
+
 veg_rgb = [
             [194, 178, 128],
             [168, 166, 92],
@@ -40,6 +44,7 @@ temp_rgb = [
             [251,184,6],
             [255,238,0]
             ] 
+
 rgb255 = [
             [68, 1, 84],
             [71, 16, 99],
@@ -70,6 +75,8 @@ rgb255 = [
 
 ####################################################
 
+
+####################################################
 
 def convert(arr, r):
     
@@ -106,6 +113,7 @@ def make_sphere(resolution_theta, resolution_phi, edge_radius):
     edge_tubes.SetInputConnection(edge_extractor.GetOutputPort())
     return [sphere_source, edge_tubes]
 
+
 def make_vegetation_table():
     rgb = []
     for i in range(len(veg_rgb)):
@@ -119,6 +127,7 @@ def make_vegetation_table():
     # ctf.AddRGBPoint(0.75,rgb[3][0],rgb[3][1],rgb[3][2])
     ctf.AddRGBPoint(0.9,rgb[3][0],rgb[3][1],rgb[3][2])
     return ctf
+
 
 def make_temp_table():
     rgb = []
@@ -214,8 +223,6 @@ def isoContoursGen(fileName):
 ####################################################
 
 
-
-
 ####################################################
 
 class colorbar_param:
@@ -270,6 +277,11 @@ class colorbar:
     def get(self):
         return self.scalar_bar
 
+
+####################################################
+
+
+####################################################
 
 class Ui_MainWindow(object):
     # global toggle_button
@@ -346,10 +358,12 @@ class PyQtDemo(QMainWindow):
     
     def addActors(self):
         if not self.ui.toggle_button.isChecked():
+            # print(self.cactor.GetProperty().GetLineWidth())
+            print("Here " + str(self.cactor.GetProperty().GetLineWidth()))
+            self.cactor.GetProperty().SetLineWidth(1.5)
             self.ren.AddActor(self.cactor)
             self.ren.AddActor(self.colorbar_actor)
             
-
 
     def __init__(self, parent = None):
         QMainWindow.__init__(self, parent)
@@ -405,8 +419,6 @@ class PyQtDemo(QMainWindow):
         temp_ctf = make_temp_table()
         colorbarparam_temp = colorbar_param(title = "Temperature (°C)",pos=[0.1,0.5])
         colorbar_actor_temp = colorbar(temp_ctf,colorbarparam_temp).get()
-
-
 
 
         curves = isoContoursGen(fileName="data/rainVTI/rain_2021.vti")
@@ -469,7 +481,7 @@ class PyQtDemo(QMainWindow):
 
 
     def combo_callback(self, val):
-        print("Combo selected :" , val)
+        # print("Combo selected :" , val)
         if val == 0 : 
             self.file="vegetation/vegetation_" 
             self.ren.AddActor(self.colorbar_actor_veg)
@@ -499,7 +511,7 @@ class PyQtDemo(QMainWindow):
         # self.ui.vtkWidget.GetRenderWindow().Render()
         # yr = int(self.year)-2000
         # if window.ui.toggle_button.isChecked():
-        print("File updated : "+"data/rainVTI/rain_"+str(self.year)+".vti")
+        # print("File updated : "+"data/rainVTI/rain_"+str(self.year)+".vti")
         file = "data/rainVTI/rain_"+str(self.year)+".vti"
         curves = isoContoursGen(fileName=file)
         self.cmapper.SetInputData(curves)
@@ -512,11 +524,11 @@ class PyQtDemo(QMainWindow):
 
 
     def toggle_callback_iso(self):
-        print("Toggle Called")
+        # print("Toggle Called")
         
         self.addActors()
         if not window.ui.toggle_button.isChecked():
-            print("Added")
+            # print("Added")
             self.ren.AddActor(self.cactor)
             self.ren.AddActor(self.colorbar_actor)
             window.ui.toggle_button.setText("Disable Rainfall ")
@@ -526,15 +538,15 @@ class PyQtDemo(QMainWindow):
             self.ren.RemoveActor(self.cactor)
             self.ren.RemoveActor(self.colorbar_actor)
             window.ui.toggle_button.setText("Enable Rainfall ")
-            print("Removed")
+            # print("Removed")
             
             
     def toggle_callback_ele(self):
-        print("Toggle2 Called")
+        # print("Toggle2 Called")
         
         self.addActors()
         if window.ui.toggle_button2.isChecked():
-            print("Added2")
+            # print("Added2")
             self.scale = 0
             self.warp.SetScaleFactor(self.scale)
             window.ui.toggle_button2.setText("Enable elevation ")
@@ -542,7 +554,7 @@ class PyQtDemo(QMainWindow):
             self.scale = 50
             self.warp.SetScaleFactor(self.scale)
             window.ui.toggle_button2.setText("Disable elevation ")
-            print("Removed2")
+            # print("Removed2")
         
         self.ui.vtkWidget.GetRenderWindow().Render()
 
@@ -576,6 +588,7 @@ def print_camera_settings():
     print("  * up vector:       %s" % (camera.GetViewUp(),))
     print("  * clipping range:  %s" % (camera.GetClippingRange(),))
 
+
 def key_pressed_callback(obj, event):
     global args
     # ---------------------------------------------------------------
@@ -586,6 +599,7 @@ def key_pressed_callback(obj, event):
         save_frame()
     elif key == "c":
         print_camera_settings()
+
     
 def save_frame():
     print("Save Image")
