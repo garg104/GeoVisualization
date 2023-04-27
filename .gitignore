@@ -4,3 +4,4 @@
 # ignore elevation files
 data/elevation/*
 data/world*
+*.mp4
